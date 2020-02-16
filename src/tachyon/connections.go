@@ -32,13 +32,14 @@ type connection struct {
 
   // Sessions Map
   session_map     map [int] chan * frame
-  ringbuffer    * Ringbuffer
+  ringbuffer    * ringbuffer
 }
 
 
 
 
 
+// goroutine
 // This is the central control function for all connections.
 func connection_control ( tach * Tachyon ) {
 
@@ -51,15 +52,11 @@ func connection_control ( tach * Tachyon ) {
   // XXX This should change to a map. To allow closure and deletion of connections.
   connections := make ( [] * connection, 0 )
 
-  //=====================================================
   // Perpetually wait for requests from higher level,
   // and responses from lower level.
-  //=====================================================
   for {
     select {
-      //---------------------------------------------
       // Get a request from higher level code.
-      //---------------------------------------------
       case request := <- tach.to_cnx_control :
         request_type := request.Info[0]
         switch request_type {
@@ -106,9 +103,7 @@ func connection_control ( tach * Tachyon ) {
         }
 
 
-      //---------------------------------------------
       // One of our connectors has a result.
-      //---------------------------------------------
       case connector_reply := <- connector_replies :
         reply_type = connector_reply.Info [ 0 ]
         switch reply_type {
@@ -126,10 +121,8 @@ func connection_control ( tach * Tachyon ) {
 
 
 
-      //---------------------------------------------
       // One of our listeners has made an incoming 
       // connection on its port.
-      //---------------------------------------------
       case listener_reply := <- listener_replies :
         reply_type = listener_reply.Info[0]
         switch reply_type {
@@ -185,7 +178,7 @@ func make_new_connection ( tach * Tachyon,
                              write_control : write_control, 
                              ssn_to_cnx    : ssn_to_cnx,
                              session_map   : make ( map[int]chan * frame, 100 ),
-                             ringbuffer    : New_Ringbuffer ( uint64(1000000) )  } 
+                             ringbuffer    : new_ringbuffer ( uint64(1000000) )  } 
   *connections = append ( *connections, tach_cnx )
 
   // Start the twin goroutines that represent the connection.
@@ -200,12 +193,11 @@ func make_new_connection ( tach * Tachyon,
 
 
 
-//===========================================================================
 // Listen to the given port forever.
 // BUGALERT These port-listeners will leak if we ever decide we no longer
 // want to listen to certain ports.
 // However, this does not seem like a high-probability problem.
-//===========================================================================
+// Nor a large-magnitude problem.
 func listener ( port string, reply_to chan * Message ) {
 
   tcp_listener, err := net.Listen ( "tcp", ":" + port )
@@ -255,7 +247,9 @@ func read_cnx ( tach         * Tachyon,
                 tach_cnx     * connection,
                 control        chan * Message ) {
 
-  buffer := make ( []byte, 10000 )    // XXX this buffer will change to rb.
+  tach_cnx.ringbuffer.set_cnx ( tach_cnx )
+
+  buffer := make ( []byte, 10000 )
 
   // Read bytes from the CNX, build frames out of them,
   // and send those frames to the SSN.
@@ -272,35 +266,15 @@ func read_cnx ( tach         * Tachyon,
     } 
 
     // Write the bytes we have received into the RB.
+    // The RB will send out whole frames to the appropriate SSN
+    // as it receives them.
     for {
-      if tach_cnx.ringbuffer.Write ( buffer [ 0 : bytes_read ] ) { // This will busywait if RB is full.
+      // This will busywait if RB is full.
+      if tach_cnx.ringbuffer.write ( buffer [ 0 : bytes_read ] ) { 
         break
       }
-    }
-
-    // Keep reading frames from the RB until a
-    // read-attempt fails.
-    for {
-      //frame, success, frame_size := tach_cnx.ringbuffer.Read_Frame ( )
-      frame, success, _ := tach_cnx.ringbuffer.Read_Frame ( )
-      //fp ( os.Stdout, "MDEBUG got frame of size %d\n", frame_size )
-      // If at first we don't succeed, continue
-      // reading more bytes.
-      if ! success {
-        break
-      }
-
-      // We have read a frame! Send it to its session.
-      //fp ( os.Stdout, "MDEBUG read_cnx GOT A FRAME!\n" )
-
-      // What SSN does it belong to ?
-      ssn_id := 0 // XXX -- parse this out of frame.
-      to_ssn := tach_cnx.session_map [ ssn_id ]
-      to_ssn <- frame
     }
   }
-
-  //fp ( os.Stdout, "MDEBUG read_cnx connection is closed.\n" )
 }
 
 
@@ -314,10 +288,9 @@ func write_cnx ( tach        * Tachyon,
 
   for {
     f := <- outbound_data
-    //fp ( os.Stdout, "MDEBUG write_cnx got frame.\n" )
-
-    bytes_written := uint32(0)
+    var bytes_written uint32
     length := uint32 ( f.data.Len() )
+
     for ; bytes_written < length; {
       n, err := cnx.Write ( f.data.Bytes() )
       bytes_written += uint32(n)
@@ -330,12 +303,8 @@ func write_cnx ( tach        * Tachyon,
         }
       }
     }
-
-    //fp ( os.Stdout, "MDEBUG write_cnx wrote frame of size %d.\n", f.data.Len() )
   }
-
   done :
-    //fp ( os.Stdout, "MDEBUG write_cnx connection is closed.\n" )
 }
 
 

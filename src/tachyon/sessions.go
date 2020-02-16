@@ -17,7 +17,7 @@ type session_t struct {
   cnx_to_ssn      chan * frame
 
   // When links send messages to us, they all use the same channel.
-  // TODO -- later, this will be two channels -- high and normal priority.
+  // XXX -- later, this will be two channels -- high and normal priority.
   links_to_ssn    chan * frame
 
   // But when we talk down to the SSNs, we use one channel for each.
@@ -35,16 +35,12 @@ func session_control ( tach * Tachyon ) {
 
   sessions := make ( [] * session_t, 0 )
 
-  //=====================================================
   // Perpetually wait for requests from higher level,
   // and responses from lower level.
-  //=====================================================
   for {
 
     select {
-      //---------------------------------------------------
       // Get a message from Tachyon or another component.
-      //---------------------------------------------------
       case msg := <- tach.to_ssn_control :
         msg_type := msg.Info[0]
 
@@ -65,13 +61,13 @@ func session_control ( tach * Tachyon ) {
 
             // All of this SSN's link will talk back to it
             // using this single link.
-            // TODO -- later this will be two: high and normal priority.
+            // XXX -- later this will be two: high and normal priority.
             links_to_ssn := make ( chan * frame, 100 )
 
             // But this SSN will talk to each link on its own individual 
             // channel. The SSN itself will fill up this array as its links
             // are made.
-            // TODO -- later this will be a map, not an array, to permit deletion.
+            // XXX -- later this will be a map, not an array, to permit deletion.
             ssn_to_links := make ( [] chan * frame, 0 )
 
             // Create and store the new ssn info for retrieval later,
@@ -151,7 +147,7 @@ func session ( tach * Tachyon, ssn * session_t ) {
 
 
   // All LNKs will use this channel to talk to this SSN.
-  // TODO -- split into high- and low-priority.
+  // XXX -- split into high- and low-priority.
   lnks_to_ssn := make ( chan * frame, 100 )
 
   for {
@@ -223,9 +219,8 @@ func session ( tach * Tachyon, ssn * session_t ) {
       //=========================================================
       case msg := <- ssn.cnx_to_ssn :
         
-        //fp ( os.Stdout, "MDEBUG ssn got msg from cnx.\n" )
         // Find LNK with this addr.
-        addr := "my_addr"
+        addr := "my_addr"  // XXX Use the addr from the message.
         channel, ok := recv_lnk_channels [ addr ]
         if ok {
           channel <- msg

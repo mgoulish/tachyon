@@ -116,9 +116,6 @@ func send ( tach * tachyon.Tachyon,
   payload_len := len ( payload )
   fp ( os.Stdout, "payload_len == %d\n", payload_len )
 
-  //msg := & tachyon.Message { Info : []string { addr, payload },
-                             //Data : []interface{} { payload } }
-  
   bytes_sent := 0
   first_send := time.Now()
 
@@ -146,6 +143,7 @@ func recv ( tach * tachyon.Tachyon,
             channel chan * tachyon.Message,
              ) {
 
+  count := 0
   var last_recv time.Time
   bytes_received := 0
 
@@ -157,6 +155,10 @@ func recv ( tach * tachyon.Tachyon,
     last_recv = time.Now()
     bytes_received += len ( str )
     //fp ( os.Stdout, "MDEBUG %d\n", bytes_received )
+    count ++
+    if 0 == (count % 1000000) {
+      fp ( os.Stdout, "%d messages received.\n", count )
+    }
 
     if str == "done" {
       fp ( os.Stdout, "bytes rcvd : %d     last_recv : %s\n",  bytes_received, last_recv )
@@ -173,6 +175,8 @@ func main ( ) {
   initiate_ptr := flag.Bool ( "initiate", false, "initiate the connection")
   flag.Parse ( )
   i_am_initiating := * initiate_ptr
+
+  fp ( os.Stdout, "process %d\n", os.Getpid() )
 
   // Start Tachyon, and start listening for errors and responses.
   tach := tachyon.New_Tachyon ( )

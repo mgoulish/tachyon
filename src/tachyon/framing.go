@@ -10,9 +10,28 @@ import (
 
 
 
+// A frame contains the actual bytes as they came in 
+// or as they are to be sent out on the wire.
 type frame struct {
   frame_type string
   data       bytes.Buffer
+}
+
+
+
+// A frame descriptor is the structure that describes a
+// a frame that is about to be encoded
+type frame_descriptor struct {
+  frame_type    string
+  fields     [] frame_descriptor_field
+}
+
+
+
+type frame_descriptor_field struct {
+  name          string
+  default_value interface{}
+  value         interface{}
 }
 
 

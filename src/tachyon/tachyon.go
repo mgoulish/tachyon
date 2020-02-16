@@ -31,6 +31,15 @@ type Tachyon struct {
 
 
 
+type Message struct {
+  Info [] string
+  Data [] interface{}
+}
+
+
+
+
+
 /*=================================================
   Public Functions
 ===================================================*/
@@ -80,6 +89,7 @@ func (t * Tachyon ) Reify () {
 
 
 //----------------------------------------------------------
+// goroutine.
 // Fields request-messages from the Application 
 // and distributes them to the Tachyon components.
 //----------------------------------------------------------

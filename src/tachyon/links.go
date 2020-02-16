@@ -27,6 +27,7 @@ type link struct {
 
 
 
+// goroutine
 func link_control ( tach * Tachyon ) {
   
   send_links := make ( [] * link, 0 )
@@ -123,7 +124,6 @@ func send ( tach * Tachyon, lnk * link ) {
           fp ( os.Stdout, "MDEBUG LNK send got framing error |%s|\n", err.Error() )
           os.Exit ( 1 )
         }
-        // f.dump ( )
         lnk.ssn_chan <- f
     }
   }
@@ -142,7 +142,6 @@ func recv ( tach * Tachyon, lnk * link ) {
         fp ( os.Stdout, "MDEBUG send LNK %s got ctrl msg |%s|\n", lnk.addr, control_msg.Info[0] )
       
       case frame_from_ssn := <- lnk.ssn_chan :
-        //fp ( os.Stdout, "MDEBUG lnk got msg from ssn.\n" )
         // Simply pass it down to App, for now.
         msg, err := deframe ( frame_from_ssn )
         if err != nil {
