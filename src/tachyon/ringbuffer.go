@@ -76,17 +76,6 @@ func ( r * ringbuffer ) write ( src [] byte ) ( written bool ) {
     r.data [ (r.head + i) % r.capacity ] = src [ i ] 
   }
   r.head += to_be_written
-  /*
-  var endpoint = r.head + to_be_written;
-  if endpoint < r.capacity {
-    copy ( r.data [ r.head : ], src )
-  } else {
-    for i = 0; i < to_be_written; i ++ {
-      r.data [ (r.head + i) % r.capacity ] = src [ i ]
-    }
-  }
-  */
-
 
   // Output as many frames as we have now.
   for {
