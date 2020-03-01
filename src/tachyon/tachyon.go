@@ -51,7 +51,7 @@ func New_Tachyon ( ) ( * Tachyon ) {
   // Public channels --------------------------
   tach.Requests  = make ( chan * Message,   100 )   // Requests from the App.
   tach.Responses = make ( chan * Message,   100 )   // Responses to the App.
-  tach.Errors    = make ( chan string,    100 )   // Error messages to the App.
+  tach.Errors    = make ( chan   string,    100 )   // Error messages to the App.
 
   // Private channels --------------------------
   tach.to_cnx_control    = make ( chan * Message, 100 )

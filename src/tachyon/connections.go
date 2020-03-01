@@ -30,9 +30,14 @@ type connection struct {
   ssn_to_cnx      chan * frame  // This is given to every session.
   session_count   int           // Later , this will become fancy -- to permit re-use of integers.
 
-  // Sessions Map
+  // the Sessions Map associates each session's number
+  // with the channel on which it receives incoming frames.
+  // ( Incoming to the Application. )
   session_map     map [int] chan * frame
   ringbuffer    * ringbuffer
+
+  // The State Machine keeps track of the state of this connection.
+  sm            * state_machine
 }
 
 
@@ -178,7 +183,9 @@ func make_new_connection ( tach * Tachyon,
                              write_control : write_control, 
                              ssn_to_cnx    : ssn_to_cnx,
                              session_map   : make ( map[int]chan * frame, 100 ),
-                             ringbuffer    : new_ringbuffer ( uint64(1000000) )  } 
+                             ringbuffer    : new_ringbuffer ( uint64(1000000) ),
+                             sm            : new_cnx_state_machine ( fmt.Sprintf("cnx_%s", port_number) ),
+                           } 
   *connections = append ( *connections, tach_cnx )
 
   // Start the twin goroutines that represent the connection.
@@ -187,6 +194,37 @@ func make_new_connection ( tach * Tachyon,
 
   // Inform the App that connection has succeeded.
   tach.Responses <- & Message { Info : []string { "connect", "success", port_number, fmt.Sprintf("%d", id) } }
+}
+
+
+
+
+
+// Make a brand-new state machine for a connection.
+func new_cnx_state_machine ( name string ) ( sm * state_machine ) {
+  sm = new_state_machine ( name )
+
+  states := []string { "START", 
+                       "HDR_RCVD", 
+                       "HDR_SENT", 
+                       "HDR_EXCH", 
+                       "OPEN_PIPE", 
+                       "OC_PIPE", 
+                       "OPEN_RCVD", 
+                       "OPEN_SENT", 
+                       "CLOSE_PIPE", 
+                       "OPENED", 
+                       "CLOSE_RCVD", 
+                       "CLOSE_SENT", 
+                       "DISCARDING", 
+                       "END",
+                     }
+
+  for _, state := range states {
+    sm.add_state ( state_t(state) )
+  }
+
+  return sm
 }
 
 
