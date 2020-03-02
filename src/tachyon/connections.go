@@ -219,7 +219,45 @@ func new_cnx_state_machine ( name string ) ( * state_machine ) {
                        "END",
                      }
 
-  return new_state_machine ( name, states )
+  sm := new_state_machine ( name, states )
+
+  sm.add_transition ( "START",     "rcvd_header",      "HDR_RCVD"   )
+  sm.add_transition ( "START",     "sent_header",      "HDR_SENT"   )
+
+  sm.add_transition ( "HDR_RCVD",  "rcvd_bad_header",  "END"        )
+  sm.add_transition ( "HDR_RCVD",  "sent_header",      "HDR_EXCH"   )
+
+  sm.add_transition ( "HDR_SENT",  "rcvd_bad_header",  "END"        )
+  sm.add_transition ( "HDR_SENT",  "rcvd_header",      "HDR_EXCH"   )
+  sm.add_transition ( "HDR_SENT",  "open_sent",        "OPEN_PIPE"  )
+
+
+  sm.add_transition ( "OPEN_PIPE",  "rcvd_bad_header", "END"        )
+  sm.add_transition ( "OPEN_PIPE",  "sent_close",      "OC_PIPE"    )
+  sm.add_transition ( "OPEN_PIPE",  "rcvd_header",     "OPEN_SENT"  )
+ 
+  sm.add_transition ( "HDR_EXCH",   "rcvd_open",       "OPEN_RCVD"  )
+  sm.add_transition ( "HDR_EXCH",   "sent_open",       "OPEN_SENT"  )
+   
+  sm.add_transition ( "OPEN_RCVD",  "sent_open",       "OPENED"     )
+
+  sm.add_transition ( "OPEN_SENT",  "rcvd_open",       "OPENED"     )
+  sm.add_transition ( "OPEN_SENT",  "sent_close",      "CLOSE_PIPE" )
+
+  sm.add_transition ( "OC_PIPE",    "rcvd_bad_header", "END"        )
+  sm.add_transition ( "OC_PIPE",    "rcvd_header",     "CLOSE_PIPE" )
+
+  sm.add_transition ( "OPENED",     "rcvd_close",      "CLOSE_RCVD" )
+  sm.add_transition ( "OPENED",     "sent_close",      "CLOSE_SENT" )
+  sm.add_transition ( "OPENED",     "sent_close",      "CLOSE_SENT" )
+
+  sm.add_transition ( "CLOSE_PIPE", "rcvd_open",       "CLOSE_SENT" )
+
+  sm.add_transition ( "CLOSE_RCVD", "sent_close",      "END" )
+
+  sm.add_transition ( "CLOSE_SENT", "rcvd_close",      "END" )
+
+  return sm
 }
 
 

@@ -52,9 +52,6 @@ func new_state_machine ( name string, states [] string ) ( * state_machine ) {
     sm.add_state ( state )
   }
 
-  sm.add_state ( "start" )
-  sm.add_state ( "end" )
-  
   return sm
 }
 
