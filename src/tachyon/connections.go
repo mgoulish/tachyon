@@ -201,8 +201,7 @@ func make_new_connection ( tach * Tachyon,
 
 
 // Make a brand-new state machine for a connection.
-func new_cnx_state_machine ( name string ) ( sm * state_machine ) {
-  sm = new_state_machine ( name )
+func new_cnx_state_machine ( name string ) ( * state_machine ) {
 
   states := []string { "START", 
                        "HDR_RCVD", 
@@ -220,11 +219,7 @@ func new_cnx_state_machine ( name string ) ( sm * state_machine ) {
                        "END",
                      }
 
-  for _, state := range states {
-    sm.add_state ( state_t(state) )
-  }
-
-  return sm
+  return new_state_machine ( name, states )
 }
 
 
