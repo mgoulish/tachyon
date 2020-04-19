@@ -29,18 +29,16 @@ func main ( ) {
   // the connection.
   init_ptr := flag.Bool ( "initiate", false, "Initiate the connection.")
 
-  id_ptr := flag.Int ( "id", 0, "Provide a unique ID for each Tachyon.")
-
   // Get the command line args.
   flag.Parse ( )
   i_am_initiating := * init_ptr
-  id := * id_ptr
 
   // This is the only function call into the 
   // Tachyon library. AFter this call, all 
   // interaction is through the channels in the
   // returned Tachyon structure.
-  tach := tachyon.New_Tachyon ( id )
+  tach := tachyon.New_Tachyon ( )
+  id := tach.Tach_ID ( )
 
   // Start listening for errors first of all, just in case.
   go print_errors ( tach.Errors )

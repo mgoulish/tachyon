@@ -3,6 +3,8 @@ package tachyon
 
 import (
          "fmt"
+         "math/rand"
+         "time"
        )
 
 
@@ -36,16 +38,18 @@ type Tachyon struct {
   // Private channels ------------------
   cnx       chan * Message
 
-  id        int
+  id        uint64
 }
 
 
 
 
 
-func New_Tachyon ( id int ) ( * Tachyon ) {
+func New_Tachyon ( ) ( * Tachyon ) {
 
-  tach := & Tachyon { id : id }
+  rand.Seed ( time.Now().UnixNano() )
+
+  tach := & Tachyon { id : rand.Uint64() }
 
   // Public channels --------------------------
   tach.Requests  = make ( chan * Message, 100 )  // The App sends requests to Tachyon.
@@ -66,6 +70,13 @@ func New_Tachyon ( id int ) ( * Tachyon ) {
   return tach
 }
 
+
+
+
+
+func (tach * Tachyon) Tach_ID ( ) ( uint64 ) {
+  return tach.id
+}
 
 
 
