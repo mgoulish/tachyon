@@ -6,8 +6,11 @@ export GOPATH=${TACHYON_ROOT}
 # These two instances can be started in any order.
 
 # This one accepts the connection.
-go run ./tachyon_example_01.go & 
+go run ./tachyon_example_01.go -id 0  & 
 
 # This one initiates the connection.
-go run ./tachyon_example_01.go -initiate &
+go run ./tachyon_example_01.go -initiate -id 1 &
+
+
+
 

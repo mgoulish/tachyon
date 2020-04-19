@@ -23,7 +23,6 @@ type Message struct {
 
 
 type Tachyon struct {
-
   // Public channels ------------------
   Requests  chan * Message
   Responses chan * Message
@@ -34,15 +33,17 @@ type Tachyon struct {
 
   // Private channels ------------------
   cnx       chan * Message
+
+  id        int
 }
 
 
 
 
 
-func New_Tachyon ( ) ( * Tachyon ) {
+func New_Tachyon ( id int ) ( * Tachyon ) {
 
-  tach := & Tachyon { }
+  tach := & Tachyon { id : id }
 
   // Public channels --------------------------
   tach.Requests  = make ( chan * Message, 100 )  // The App sends requests to Tachyon.
