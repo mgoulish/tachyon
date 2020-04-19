@@ -31,6 +31,8 @@ type Tachyon struct {
   Outgoing  chan * Message
   Incoming  chan * Message
 
+  ID        chan int
+
   // Private channels ------------------
   cnx       chan * Message
 
@@ -51,11 +53,13 @@ func New_Tachyon ( id int ) ( * Tachyon ) {
   tach.Outgoing  = make ( chan * Message, 100 )  // The App sends messages out the port.
   tach.Incoming  = make ( chan * Message, 100 )  // Messagges inbound from the port to the App.
   tach.Errors    = make ( chan * Message, 100 )  // Tachyon sends errors to the App.
+  tach.ID        = make ( chan   int,       1 )  // Tachyon issues IDs to senders.
 
   // Private channels --------------------------
   tach.cnx       = make ( chan * Message, 100 )  // Tachyon sends requests to Connection Control.
 
   // Start the Tachyon components.
+  go issue_ids          ( tach )
   go connection_control ( tach )                 
   go requests_handler   ( tach )                 
 
@@ -88,6 +92,18 @@ func requests_handler ( tach * Tachyon ) {
       default :
         tach.Errors <- & Message { Info: []string {fmt.Sprintf ( "unrecognized request |%s|", req)} }
     }
+  }
+}
+
+
+
+
+
+func issue_ids ( tach * Tachyon ) {
+  id := 0
+  for {
+    tach.ID <- id
+    id ++
   }
 }
 

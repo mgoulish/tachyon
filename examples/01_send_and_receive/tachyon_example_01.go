@@ -89,7 +89,8 @@ func responses ( tach * tachyon.Tachyon,
                      wg )
 
       case "start_sending" :
-        go send ( expected_frame_count, 
+        go send ( tach,
+                  expected_frame_count, 
                   tach.Outgoing,
                   wg )
 
@@ -103,11 +104,15 @@ func responses ( tach * tachyon.Tachyon,
 
 
 
-func send ( expected_frame_count int, 
+func send ( tach * tachyon.Tachyon,
+            expected_frame_count int, 
             outgoing_message_channel chan * tachyon.Message,
             wg * sync.WaitGroup ) {
 
   defer wg.Done()
+
+  id := <- tach.ID
+  fp ( os.Stdout, "MDEBUG sender's id is %d\n", id )
 
   // Build up a 1024-byte message body.
   // A Tachyon message is always one frame:
