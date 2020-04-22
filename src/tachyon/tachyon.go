@@ -41,7 +41,7 @@ func New_Tachyon ( ) ( * Tachyon ) {
   tach := & Tachyon { Requests  : make ( chan * Msg, 100 ),
                       Responses : make ( chan * Msg, 100 ),
                     }
-  go tach_listen_for_requests ( tach )
+  go tach_listen_for_input ( tach )
 
   return tach
 }
@@ -54,17 +54,25 @@ func New_Tachyon ( ) ( * Tachyon ) {
 //  Private
 //=================================================================
 
-func tach_listen_for_requests ( tach * Tachyon ) {
+func tach_listen_for_input ( tach * Tachyon ) {
   for {
-    req, more := <- tach.Requests
+    input, more := <- tach.Requests
     if ! more {
       break
     }
 
-    fp ( os.Stdout, "MDEBUG tach got req : |%s|\n", req.Data[0].Attr )
+    switch input.Data[0].Attr {
+      
+      case "new_topic" :
+        top := New_Topic ( input.Data[0].Val.(string) )
+        fp ( os.Stdout, "tach : made topic |%s|\n", top.name )
+
+      default :
+        fp ( os.Stdout, "tach error : unrecognized input : |%s|\n", input.Data[0].Attr )
+    }
   }
 
-  fp ( os.Stdout, "MDEBUG Tachyon requet listener exiting.\n" )
+  fp ( os.Stdout, "tach input listener exiting.\n" )
 }
 
 

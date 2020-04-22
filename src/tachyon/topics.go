@@ -66,10 +66,10 @@ func top_listen_for_requests ( top * Topic ) {
     if ! more {
       break
     }
-    fp ( os.Stdout, "MDEBUG topic |%s| got request |%#v|\n", top.name, req )
+    fp ( os.Stdout, "topic |%s| : got request |%#v|\n", top.name, req )
   }
   
-  fp ( os.Stdout, "MDEBUG topic |%s| quitting.\n", top.name )
+  fp ( os.Stdout, "topic |%s| : quitting.\n", top.name )
 }
 
 
