@@ -15,8 +15,13 @@ var fp = fmt.Fprintf
 //  Public
 //=================================================================
 
-type Message struct {
-  AV_pairs map [ string ] interface{}
+type AV struct {
+  Attr string
+  Val  interface{}
+}
+
+type Msg struct {
+  Data [] AV
 }
 
 
@@ -24,8 +29,8 @@ type Message struct {
 
 
 type Tachyon struct {
-  Requests  chan * Message
-  Responses chan * Message
+  Requests  chan * Msg
+  Responses chan * Msg
 }
 
 
@@ -33,8 +38,8 @@ type Tachyon struct {
 
 
 func New_Tachyon ( ) ( * Tachyon ) {
-  tach := & Tachyon { Requests  : make ( chan * Message, 100 ),
-                      Responses : make ( chan * Message, 100 ),
+  tach := & Tachyon { Requests  : make ( chan * Msg, 100 ),
+                      Responses : make ( chan * Msg, 100 ),
                     }
   go tach_listen_for_requests ( tach )
 
@@ -55,7 +60,8 @@ func tach_listen_for_requests ( tach * Tachyon ) {
     if ! more {
       break
     }
-    fp ( os.Stdout, "MDEBUG tach got request: |%#v|\n", req )
+
+    fp ( os.Stdout, "MDEBUG tach got req : |%s|\n", req.Data[0].Attr )
   }
 
   fp ( os.Stdout, "MDEBUG Tachyon requet listener exiting.\n" )

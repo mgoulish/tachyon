@@ -18,19 +18,19 @@ type Topic struct {
 
   // This is the channel that all Abstractors use 
   // that produce abstractions for this Topic.
-  Inputs chan * Message
+  Inputs chan * Msg
 
   // No storage yet. At first, the topic is just a 
   // multicast message server.
-  // storage [] * Message
+  // storage [] * Msg
 
   // A channel to use if you want to subscribe.
   // All incoming messages will be pushed to you 
   // immediately after being stored.
   // Your message must include your channel for results.
-  Subscription_Requests chan * Message
+  Subscription_Requests chan * Msg
 
-  subscribers map [ string ] chan * Message
+  subscribers map [ string ] chan * Msg
 }
 
 
@@ -39,9 +39,9 @@ type Topic struct {
 
 func New_Topic ( name string ) ( * Topic ) {
   top := & Topic { name                  : name,
-                   Inputs                : make ( chan * Message, 100 ),
-                   Subscription_Requests : make ( chan * Message, 100 ),
-                   subscribers           : make ( map [ string ] chan * Message ),
+                   Inputs                : make ( chan * Msg, 100 ),
+                   Subscription_Requests : make ( chan * Msg, 100 ),
+                   subscribers           : make ( map [ string ] chan * Msg ),
                  }
   return top
 }

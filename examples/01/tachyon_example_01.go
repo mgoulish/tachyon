@@ -3,8 +3,9 @@ package main
 import (
          "fmt"
          "os"
+         "time"
 
-         "tachyon"
+         t "tachyon"
        )
 
 
@@ -15,8 +16,11 @@ var fp = fmt.Fprintf
 
 
 func main ( ) {
-  tach := tachyon.New_Tachyon ( )
-  fp ( os.Stdout, "MDEBUG tach: |%#v|\n", tach )
+  tach := t.New_Tachyon ( )
+
+  tach.Requests <- & t.Msg { []t.AV { { "topic", "image" } } }
+
+  time.Sleep ( time.Second * 5 )
   fp ( os.Stdout, "App exiting.\n" )
 }
 
