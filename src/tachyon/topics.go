@@ -18,19 +18,13 @@ type Topic struct {
 
   // This is the channel that all Abstractors use 
   // that produce abstractions for this Topic.
-  Inputs chan * Msg
+  inputs chan * Msg
 
   // No storage yet. At first, the topic is just a 
   // multicast message server.
   // storage [] * Msg
 
-  // A channel to use if you want to subscribe.
-  // All incoming messages will be pushed to you 
-  // immediately after being stored.
-  // Your message must include your channel for results.
-  Subscription_Requests chan * Msg
-
-  subscribers map [ string ] chan * Msg
+  subscribers [ ] chan * Msg
 }
 
 
@@ -39,10 +33,10 @@ type Topic struct {
 
 func New_Topic ( name string ) ( * Topic ) {
   top := & Topic { name                  : name,
-                   Inputs                : make ( chan * Msg, 100 ),
-                   Subscription_Requests : make ( chan * Msg, 100 ),
-                   subscribers           : make ( map [ string ] chan * Msg ),
+                   inputs                : make ( chan * Msg, 100 ),
+                   subscribers           : make ( [ ] chan * Msg, 0 ),
                  }
+  go top.listen ( ) 
   return top
 }
 
@@ -50,26 +44,28 @@ func New_Topic ( name string ) ( * Topic ) {
 
 
 
-func topic ( top * Topic ) {
-  go top_listen_for_requests ( top )
-  // go top_listen_for_inputs   ( top )
+func ( top * Topic ) subscribe ( channel chan * Msg ) {
+  top.subscribers = append ( top.subscribers, channel )
 }
 
 
 
 
 
-func top_listen_for_requests ( top * Topic ) {
+func ( top * Topic ) listen ( ) {
   for {
-    req, more := <- top.Subscription_Requests 
+    msg, more := <- top.inputs 
 
     if ! more {
       break
     }
-    fp ( os.Stdout, "topic |%s| : got request |%#v|\n", top.name, req )
+
+    for _, subscriber := range top.subscribers {
+      subscriber <- msg
+    }
   }
   
-  fp ( os.Stdout, "topic |%s| : quitting.\n", top.name )
+  fp ( os.Stdout, "topic |%s| : listener quitting.\n", top.name )
 }
 
 
