@@ -1,0 +1,132 @@
+Wed 06 May 2020 02:32:21 AM EDT
+{
+  The vision now is something like this:
+
+  There are two levels of Abstractors in Tachyon.
+  The lower is called the Sensorium.
+  It is a collection of Abstractors that is pulsed by the
+  Sensor. The Sensor produces an image, and the rest of the 
+  Sensorium runs automatically, driven by a fixed pattern of
+  subscriptions to topics.
+
+  Right now I think the pattern is this:
+
+  image --> histogram --> threshold --> binary_image --> connected_components
+
+  It need not be linear -- could be branching -- but this 
+  one is linear so far.
+
+  How is the imaging Sensor driven?
+  Probably simply pulsed once from main() for now.
+
+  But when we get to connected_components something new happens.
+  There is an Abstractor waiting on that Topic that has the 
+  ability to launch more Abstractors!
+  And these are the first examples of non-Sensorium, 'cognitive' 
+  Abstractors. All Abstractors from this level higher will shares this
+  property: that they are not hard-wired to specific Topics
+  and do not pulse in rhythm with the frame-times of the Sensor.
+
+  Cognitive Abstractors will require the ability to browse the timeline 
+  of postings to all Topics, probably on a bulletin board.
+  From this level up, Abstractors will operate in a more complex way,
+  spawning each other, advertising for inputs, maybe some form of
+  competition.
+
+  But the first step is just to get that initial Abstractor to 
+  spawn news ones: one for each bright component it sees in 
+  connected_components.
+
+  These first 'cognitive' Abstractor will be responsible for 
+  following each bright connected component as it travels through
+  the image.
+}
+
+
+
+
+
+Mon 04 May 2020 02:04:51 AM EDT
+{
+  ok how about this....
+  there is an abs that can launch others.
+  it looks at things -- coming to it in a normal feed
+
+  OK -- how about this :
+
+
+    * there is a single BB
+
+    * they browse - BB helps
+
+    * there is a single launcher that guarantees only
+      one to a region-or-whatever AT THE START.
+    
+    * AFter that, they compete - based on highest certainty.
+
+    -----------------------------------------------------
+
+    ok -- how do advertisements work ?
+
+      * controlled vocab
+
+      * inputs, and outputs
+
+      * standard window def'n and whatever else
+
+      * things can work on more specific versions
+}
+
+
+
+
+
+Sun 03 May 2020 05:33:00 AM EDT
+{
+  
+  OK!
+  SO -- 
+  THERE IS A DIFFERENT WAY OF SUBSCRIBING TO A TOPIC.
+  THE TOPIC KEEPS HISTORY.
+  THIS SUBSCRIPTION JUST WANTS A NOTICE WHEN YOU HAVE 
+  TWO FRAMES -- EACH NEW FRAME 2 AND UP, IT WANTS TO KNOW.
+
+  AND THEN IT COMES AND BROWSES!!!
+
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+  But how do multi-frame abstractors work?
+
+    * How do you prevent multiple Abstractors 
+      fromworking on the same thing?
+
+ 
+   ? They can see all history, because the Topics 
+     also store everything.
+
+   ? They can mark messages somehow, to indicate ownership.
+  
+   ? If another Abstractor of the same type attempts to
+     mark a message, it can't.
+
+   * Those marks are serialized by sending them as msgs to 
+     the owning Topic.
+
+   * So something is browsing history of a given topic.
+
+}
+
+
+
+
+
+Sat 02 May 2020 11:05:45 AM EDT
+{
+  Big bright object.
+  Track it!
+  Image --> Brightness Image --> Gray Histogram --> 
+    Easy Threshold --> Region Finder --> Multi-Frame Tracker !!!
+
+  Track intermittent objects !!!
+}
