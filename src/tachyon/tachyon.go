@@ -69,7 +69,6 @@ func get_val_from_msg ( attr string, msg * Msg ) ( val interface{} ) {
 //=================================================================
 
 func tach_input ( tach * Tachyon ) {
-  //var topics [] * Topic
 
   topics := make ( map[string] * Topic )
 
@@ -86,8 +85,9 @@ func tach_input ( tach * Tachyon ) {
       case "new_topic" :
         name := msg.Data[0].Val.(string) 
         top  := New_Topic ( name )
-        // topics = append ( topics, top )
         topics [ name ] = top
+        // Tell the App that the topic has been created.
+        tach.Responses <- & Msg { []AV { { "new_topic", name } } }
 
 
       case "subscribe" :
