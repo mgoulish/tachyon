@@ -44,8 +44,17 @@ func New_Topic ( name string ) ( * Topic ) {
 
 
 
-func ( top * Topic ) subscribe ( channel chan * Msg ) {
-  top.subscribers = append ( top.subscribers, channel )
+func ( top * Topic ) subscribe ( subscriber_channel chan * Msg ) {
+
+  // Add the subscriber's channel to my list.
+  top.subscribers = append ( top.subscribers, subscriber_channel )
+
+  // Send a confirmation message as the first message
+  // on the subscriber's channel. 
+  // NOTE : all subscribers to topics must undesratnd that 
+  //        the first message they will receive will be a
+  //        confirmation message -- not a 'real' message.
+  subscriber_channel <- & Msg { []AV { { "subscribed", top.name } } }
 }
 
 
