@@ -121,7 +121,7 @@ func ( img * Image ) Get ( x, y uint32 ) ( r, g, b, a byte ) {
 
 
 
-func image_read ( file_name string ) ( img * Image ) {
+func Read_Image ( file_name string ) ( img * Image ) {
   reader, err := os.Open ( file_name )
   if err != nil {
     fp ( os.Stdout, "image_read error: |%s|\n", err.Error() )

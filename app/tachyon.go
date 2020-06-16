@@ -99,6 +99,11 @@ func sensor ( tach * t.Tachyon, topic_name string ) {
     image_file_name := fmt.Sprintf ( "/home/annex_2/vision_data/apollo/docking_with_lem/image-%04d.jpg", i )
     fp ( os.Stdout, "MDEBUG image_file_name: |%s|\n", image_file_name )
     time.Sleep ( time.Millisecond * 10 )
+    image := t.Read_Image ( image_file_name )
+    x := uint32(100)
+    y := uint32(100)
+    r, g, b, _ := image.Get ( x, y )
+    fp ( os.Stdout, "MDEBUG got an image!!! pixel at %d,%d is: %d,%d,%d\n", x, y, r, g, b )
   }
 }
 
