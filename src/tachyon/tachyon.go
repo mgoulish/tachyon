@@ -50,12 +50,14 @@ func New_Tachyon ( ) ( * Tachyon ) {
 
 
 
-func get_val_from_msg ( attr string, msg * Msg ) ( val interface{} ) {
+func get_val_from_msg ( attr string, msg * Msg ) ( interface{} ) {
   for _, pair := range msg.Data {
     if attr == pair.Attr {
+      //fp ( os.Stdout, "MDEBUG get_val_from_msg type is %T\n", pair.Val )
       return pair.Val
     }
   }
+
 
   return nil
 }
@@ -91,7 +93,6 @@ func tach_input ( tach * Tachyon ) {
 
 
       case "subscribe" :
-
         topic_name, ok := get_val_from_msg("subscribe", msg).(string)
         if ! ok {
           fp ( os.Stdout, "tach_input error: subscribe with no topic name |%#v|\n", msg )
@@ -110,6 +111,24 @@ func tach_input ( tach * Tachyon ) {
           fp ( os.Stdout, "tach_input error: no such topic: |%s|\n", topic_name )
         }
         topic.subscribe ( channel )
+
+
+      case "post" :
+        topic_name, ok := get_val_from_msg("post", msg).(string)
+        if ! ok {
+          fp ( os.Stdout, "tach_input error: post with no topic name |%#v|\n", msg )
+          continue
+        }
+
+        top := topics [ topic_name ]
+        fp ( os.Stdout, "MDEBUG post to topic |%#v|\n", top )
+        image, ok := get_val_from_msg("content", msg).(*Image)
+        if ! ok {
+          fp ( os.Stdout, "tach_input error: post content does not contain an image.\n" )
+          continue
+        }
+
+        fp ( os.Stdout, "MDEBUG post contains an image! type %d width %d height %d\n", image.Image_Type, image.Width, image.Height )
 
 
 

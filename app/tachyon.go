@@ -104,6 +104,7 @@ func sensor ( tach * t.Tachyon, topic_name string ) {
     y := uint32(100)
     r, g, b, _ := image.Get ( x, y )
     fp ( os.Stdout, "MDEBUG got an image!!! pixel at %d,%d is: %d,%d,%d\n", x, y, r, g, b )
+    tach.Requests <- & t.Msg { []t.AV { {"post", image_topic}, {"content", image} } }
   }
 }
 
