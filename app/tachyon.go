@@ -3,6 +3,7 @@ package main
 import (
          "fmt"
          "os"
+         "time"
 
          t "tachyon"
        )
@@ -11,6 +12,7 @@ import (
 var fp = fmt.Fprintf
 
 
+var image_topic string
 
 
 func main ( ) {
@@ -21,12 +23,8 @@ func main ( ) {
 
   // Add its first topic: image.
   // This will be the topic that the basic sensor posts to.
-  image_topic := "image"
+  image_topic = "image"
   tach.Requests <- & t.Msg { []t.AV { { "new_topic", image_topic } } }
-
-  // Create the image sensor, and tell it what topic 
-  // it should subscribe itself to.
-  go sensor ( tach, image_topic )
 
   fp ( os.Stdout, "Hit 'enter' to quit.\n" )
   var s string
@@ -41,7 +39,14 @@ func responses ( tach * t.Tachyon ) {
   for {
     msg := <- tach.Responses
 
-    fp ( os.Stdout, "App got a response: |%#v|\n", msg )
+    // fp ( os.Stdout, "App got a response: |%#v|\n", msg )
+
+    if msg.Data[0].Attr == "new_topic" && msg.Data[0].Val == image_topic {
+      // Create the image sensor, and tell it 
+      // which topic it should post to.
+      fp ( os.Stdout, "App: image topis has been created. Starting sensor.\n" )
+      go sensor ( tach, image_topic )
+    }
   }
 }
 
@@ -49,14 +54,9 @@ func responses ( tach * t.Tachyon ) {
 
 
 
-// TODO -- this is nice, except, um.  It isn't a sensor. 
-// A sensor would send *to* this topic.
-// Change this to be the first receiver from the image
-// topic, and make an actual sensor.
-// How will that work?
+// Create histograms of the incoming images.
 
-
-func sensor ( tach * t.Tachyon, topic_name string ) ( ) {
+func histogram ( tach * t.Tachyon, topic_name string ) ( ) {
   // To subscribe to our topic, we must supply
   // the channel that the topic will use to communicate
   // to us.
@@ -75,20 +75,31 @@ func sensor ( tach * t.Tachyon, topic_name string ) ( ) {
     if message_count == 1 {
       if msg.Data[0].Attr != "subscribed" {
         // Something bad happened.
-        fp ( os.Stdout, "App: snesor: error: |%s|\n", msg.Data[0].Attr )
+        fp ( os.Stdout, "App: histogram: error: |%s|\n", msg.Data[0].Attr )
         break
       }
-      fp ( os.Stdout, "App: sensor: got subscription confirmation.\n" )
+      fp ( os.Stdout, "App: histogram: got subscription confirmation.\n" )
     } else
     {
-      fp ( os.Stdout, "App: sensor: got msg: |%#v|\n", msg )
+      fp ( os.Stdout, "App: histogram: got msg: |%#v|\n", msg )
     }
   }
   
   // TODO How should we really log stuff?
   //      It should include the Tachyon as well as the App,
   //      all the Abstractors, timestamps, everything.
-  fp ( os.Stdout, "App: sensor exiting.\n" )
+  fp ( os.Stdout, "App: histogram exiting.\n" )
+}
+
+
+
+
+func sensor ( tach * t.Tachyon, topic_name string ) {
+  for i := 1; i < 101; i ++ {
+    image_file_name := fmt.Sprintf ( "/home/annex_2/vision_data/apollo/docking_with_lem/image-%04d.jpg", i )
+    fp ( os.Stdout, "MDEBUG image_file_name: |%s|\n", image_file_name )
+    time.Sleep ( time.Millisecond * 10 )
+  }
 }
 
 

@@ -59,6 +59,17 @@ func ( top * Topic ) subscribe ( subscriber_channel chan * Msg ) {
 
 
 
+// By calling 'publish', a routine pushes a message out on this
+// topic to all subscribers.
+
+func ( top * Topic ) publish ( msg * Msg ) {
+  for _, s := range top.subscribers {
+    s <- msg
+  }
+}
+
+
+
 
 
 func ( top * Topic ) listen ( ) {
