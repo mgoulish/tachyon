@@ -120,23 +120,25 @@ func tach_input ( tach * Tachyon ) {
           continue
         }
         top := topics [ topic_name ]
-        // fp ( os.Stdout, "MDEBUG post to topic |%#v|\n", top )
-        // TODO Don't convert to an image.  Just send as is.
-        image, ok := Get_Val_From_Msg("data", msg).(*Image)
-        if ! ok {
-          fp ( os.Stdout, "tach_input error: post data does not contain an image.\n" )
-          continue
-        }
-        //fp ( os.Stdout, "MDEBUG post contains an image! type %d width %d height %d\n", image.Image_Type, image.Width, image.Height )
-        top.post ( & Msg { []AV { {"data", image} } } )
+
+        // fp ( os.Stdout, "MDEBUG tach_input got post for |%s|\n", topic_name )
+
+        // No need to remove the Attr-Val pair that describes the topic.
+        // EWnd-users will simply ignore it.
+        top.post ( msg )
 
 
 
 
       default :
         
-        // Any other word must be a topic name.
+        // Actually I think this is archaic and unused.
+        // Let's see...
 
+        fp ( os.Stdout, "MDEBUG Oops. I guess not.\n" )
+        os.Exit ( 1 )
+
+        // Any other word must be a topic name.
         top_name := msg.Data[0].Attr
         top, ok := topics [ top_name ]
         if ! ok {
