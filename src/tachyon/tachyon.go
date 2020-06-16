@@ -50,10 +50,10 @@ func New_Tachyon ( ) ( * Tachyon ) {
 
 
 
-func get_val_from_msg ( attr string, msg * Msg ) ( interface{} ) {
+func Get_Val_From_Msg ( attr string, msg * Msg ) ( interface{} ) {
   for _, pair := range msg.Data {
     if attr == pair.Attr {
-      //fp ( os.Stdout, "MDEBUG get_val_from_msg type is %T\n", pair.Val )
+      //fp ( os.Stdout, "MDEBUG Get_Val_From_Msg type is %T\n", pair.Val )
       return pair.Val
     }
   }
@@ -92,19 +92,18 @@ func tach_input ( tach * Tachyon ) {
         tach.Responses <- & Msg { []AV { { "new_topic", name } } }
 
 
+
       case "subscribe" :
-        topic_name, ok := get_val_from_msg("subscribe", msg).(string)
+        topic_name, ok := Get_Val_From_Msg("subscribe", msg).(string)
         if ! ok {
           fp ( os.Stdout, "tach_input error: subscribe with no topic name |%#v|\n", msg )
           continue
         }
-
-        channel, ok := get_val_from_msg("channel", msg).(chan * Msg)
+        channel, ok := Get_Val_From_Msg("channel", msg).(chan * Msg)
         if ! ok {
           fp ( os.Stdout, "tach_input error: subscribe with no channel |%#v|\n", msg )
           continue
         }
-
         // subscribers = append ( subscribers, channel )
         topic, ok := topics [ topic_name ]
         if ! ok {
@@ -113,22 +112,23 @@ func tach_input ( tach * Tachyon ) {
         topic.subscribe ( channel )
 
 
+
       case "post" :
-        topic_name, ok := get_val_from_msg("post", msg).(string)
+        topic_name, ok := Get_Val_From_Msg("post", msg).(string)
         if ! ok {
           fp ( os.Stdout, "tach_input error: post with no topic name |%#v|\n", msg )
           continue
         }
-
         top := topics [ topic_name ]
-        fp ( os.Stdout, "MDEBUG post to topic |%#v|\n", top )
-        image, ok := get_val_from_msg("content", msg).(*Image)
+        // fp ( os.Stdout, "MDEBUG post to topic |%#v|\n", top )
+        // TODO Don't convert to an image.  Just send as is.
+        image, ok := Get_Val_From_Msg("data", msg).(*Image)
         if ! ok {
-          fp ( os.Stdout, "tach_input error: post content does not contain an image.\n" )
+          fp ( os.Stdout, "tach_input error: post data does not contain an image.\n" )
           continue
         }
-
-        fp ( os.Stdout, "MDEBUG post contains an image! type %d width %d height %d\n", image.Image_Type, image.Width, image.Height )
+        //fp ( os.Stdout, "MDEBUG post contains an image! type %d width %d height %d\n", image.Image_Type, image.Width, image.Height )
+        top.post ( & Msg { []AV { {"data", image} } } )
 
 
 

@@ -7,6 +7,17 @@ Tue 16 Jun 2020 12:23:22 AM EDT
 
   NEXT -- read the image, turn it into a pixel array,
           and post to the topic!
+  
+
+  By the way -- 
+  note on breaking video info frames:
+
+        ffmpeg -i VID00004.MP4 -r 30 -f image2  ./1/monday_road_trip-%05d.tif
+  
+  And combining frames into video:
+
+        ffmpeg -f image2 -i test.%04d.png -r 10  foo.avi
+
 }
 
 

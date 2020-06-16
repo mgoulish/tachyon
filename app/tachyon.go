@@ -44,8 +44,9 @@ func responses ( tach * t.Tachyon ) {
     if msg.Data[0].Attr == "new_topic" && msg.Data[0].Val == image_topic {
       // Create the image sensor, and tell it 
       // which topic it should post to.
-      fp ( os.Stdout, "App: image topis has been created. Starting sensor.\n" )
-      go sensor ( tach, image_topic )
+      fp ( os.Stdout, "App: image topic has been created. Starting Abstractors.\n" )
+      go sensor    ( tach, image_topic )
+      go histogram ( tach, image_topic )
     }
   }
 }
@@ -60,16 +61,16 @@ func histogram ( tach * t.Tachyon, topic_name string ) ( ) {
   // To subscribe to our topic, we must supply
   // the channel that the topic will use to communicate
   // to us.
-  from_topic := make ( chan * t.Msg, 10 ) 
+  my_input_channel := make ( chan * t.Msg, 10 ) 
 
   // Send the request.
   tach.Requests <- & t.Msg { []t.AV { { "subscribe", topic_name },
-                                      { "channel",   from_topic }}}
+                                      { "channel",   my_input_channel }}}
 
   // Now read messages that the topic sends me.
   message_count := 0
   for {
-    msg := <- from_topic
+    msg := <- my_input_channel
     message_count ++
 
     if message_count == 1 {
@@ -81,7 +82,18 @@ func histogram ( tach * t.Tachyon, topic_name string ) ( ) {
       fp ( os.Stdout, "App: histogram: got subscription confirmation.\n" )
     } else
     {
-      fp ( os.Stdout, "App: histogram: got msg: |%#v|\n", msg )
+      fp ( os.Stdout, "App: histogram: got msg!\n" )
+
+      image, ok := t.Get_Val_From_Msg("data", msg).(*t.Image)
+      if ! ok {
+        fp ( os.Stdout, "tach_input error: post data does not contain an image.\n" )
+        continue
+      }
+
+      x := uint32(100)
+      y := uint32(100)
+      r, g, b, _ := image.Get ( x, y )
+      fp ( os.Stdout, "histogram got an image!!! pixel at %d,%d is: %d,%d,%d\n", x, y, r, g, b )
     }
   }
   
@@ -96,15 +108,14 @@ func histogram ( tach * t.Tachyon, topic_name string ) ( ) {
 
 func sensor ( tach * t.Tachyon, topic_name string ) {
   for i := 1; i < 101; i ++ {
+    time.Sleep ( time.Second )
     image_file_name := fmt.Sprintf ( "/home/annex_2/vision_data/apollo/docking_with_lem/image-%04d.jpg", i )
-    fp ( os.Stdout, "MDEBUG image_file_name: |%s|\n", image_file_name )
-    time.Sleep ( time.Millisecond * 10 )
     image := t.Read_Image ( image_file_name )
-    x := uint32(100)
-    y := uint32(100)
-    r, g, b, _ := image.Get ( x, y )
-    fp ( os.Stdout, "MDEBUG got an image!!! pixel at %d,%d is: %d,%d,%d\n", x, y, r, g, b )
-    tach.Requests <- & t.Msg { []t.AV { {"post", image_topic}, {"content", image} } }
+    //x := uint32(100)
+    //y := uint32(100)
+    //r, g, b, _ := image.Get ( x, y )
+    //fp ( os.Stdout, "MDEBUG got an image!!! pixel at %d,%d is: %d,%d,%d\n", x, y, r, g, b )
+    tach.Requests <- & t.Msg { []t.AV { {"post", image_topic}, {"data", image} } }
   }
 }
 

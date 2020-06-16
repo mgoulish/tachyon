@@ -59,10 +59,10 @@ func ( top * Topic ) subscribe ( subscriber_channel chan * Msg ) {
 
 
 
-// By calling 'publish', a routine pushes a message out on this
-// topic to all subscribers.
+// By calling 'post', the given message 
+// is pushed out to all subscribers.
 
-func ( top * Topic ) publish ( msg * Msg ) {
+func ( top * Topic ) post ( msg * Msg ) {
   for _, s := range top.subscribers {
     s <- msg
   }
