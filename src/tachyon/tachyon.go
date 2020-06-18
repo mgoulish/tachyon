@@ -121,10 +121,10 @@ func tach_input ( tach * Tachyon ) {
         }
         top := topics [ topic_name ]
 
-        // fp ( os.Stdout, "MDEBUG tach_input got post for |%s|\n", topic_name )
+        fp ( os.Stdout, "MDEBUG tach_input got post for |%s|\n", topic_name )
 
         // No need to remove the Attr-Val pair that describes the topic.
-        // EWnd-users will simply ignore it.
+        // End-users will simply ignore it.
         top.post ( msg )
 
 

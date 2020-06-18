@@ -13,11 +13,17 @@ import (
 var fp = fmt.Fprintf
 
 
-var image_topic string
-var histo_topic string
+var image_topic          string
+var histo_topic          string
+var smoothed_histo_topic string
+var n_topics             int
 
 
 func main ( ) {
+
+  fp ( os.Stdout, "Tachyon starting...\n" )
+  fp ( os.Stdout, "Hit 'enter' to quit.\n" )
+  time.Sleep ( 3 * time.Second )
 
   // Create a new Tachyon, and start listening for responses
   tach := t.New_Tachyon ( )
@@ -29,11 +35,16 @@ func main ( ) {
   // topic has been created.
   image_topic = "image"
   tach.Requests <- & t.Msg { []t.AV { { "new_topic", image_topic } } }
+  n_topics ++
 
   histo_topic = "histo"
   tach.Requests <- & t.Msg { []t.AV { { "new_topic", histo_topic } } }
+  n_topics ++
 
-  fp ( os.Stdout, "Hit 'enter' to quit.\n" )
+  smoothed_histo_topic = "smoothed_histo"
+  tach.Requests <- & t.Msg { []t.AV { { "new_topic", smoothed_histo_topic } } }
+  n_topics ++
+
   var s string
   fmt.Scanf ( "%s", & s )
 }
@@ -44,7 +55,6 @@ func main ( ) {
 
 func responses ( tach * t.Tachyon ) {
   abstractors_started := false
-  requested_topics    := 2
   created_topics      := 0
 
   for {
@@ -55,11 +65,9 @@ func responses ( tach * t.Tachyon ) {
       fp ( os.Stdout, "MDEBUG responses: %d created topics.\n" , created_topics)
     }
 
-    if created_topics >= requested_topics && abstractors_started == false {
+    if created_topics >= n_topics && abstractors_started == false {
       fp ( os.Stdout, "MDEBUG starting abstractors.\n" )
       abstractors_started = true
-      // Create the image sensor, and tell it 
-      // which topic it should post to.
       fp ( os.Stdout, "App: All topics have been created. Starting Abstractors.\n" )
       go sensor    ( tach )
       go histogram ( tach ) 
@@ -120,34 +128,11 @@ func histogram ( tach * t.Tachyon ) ( ) {
       }
 
 
+      // Post the histogram !
       tach.Requests <- & t.Msg { []t.AV {{ "post", histo_topic},
                                          { "data", histo},
                                          { "length", 768}}}
 
-      
-      /*
-        This code writes data and then uses the gnuplot_script
-        in this directory to create a gnuplot graph of every histogram.
-        I'm commenting it out for now, but leaving it here because
-        I would like to systematize something like this in the near
-        future for all Abstractors.
-        How?
-
-      f, _ := os.Create("./data")
-      for i := 0; i < 768; i ++ {
-        // fp ( os.Stdout, "%d : %d\n", i, histo[i] )
-        fmt.Fprintf ( f, "%d %d\n", i, histo[i] )
-      }
-      f.Close()
-      
-      cmd  := "gnuplot"
-      args := []string{"./gnuplot_script"}
-      exec.Command(cmd, args...).Run()
-
-      cmd  = "mv"
-      args = []string{"./plot.jpg", fmt.Sprintf("./graphs/%04d.jpg", message_count)}
-      exec.Command(cmd, args...).Run()
-      */
     }
   }
   
