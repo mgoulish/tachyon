@@ -25,12 +25,20 @@ type Msg struct {
 }
 
 
+type Abstractor struct {
+  id int64
+  run func ( * Abstractor )
+  visualize func (* Abstractor)
+  subscribed_topics [] string
+}
 
 
 
 type Tachyon struct {
   Requests  chan * Msg
   Responses chan * Msg
+
+  abstractors [] Abstractor
 }
 
 
@@ -58,7 +66,6 @@ func Get_Val_From_Msg ( attr string, msg * Msg ) ( interface{} ) {
     }
   }
 
-
   return nil
 }
 
@@ -83,6 +90,15 @@ func tach_input ( tach * Tachyon ) {
     switch msg.Data[0].Attr {
       
       // Topics can't have any of the following keywords as their namnes.
+
+      case "new_abstractor" :
+        abstractor, ok := msg.Data[0].Val.(Abstractor)
+        if ! ok {
+          fp ( os.Stdout, "tachyon error: no abstractor in new_abstractor message.\n" )
+          os.Exit ( 1 )
+        }
+        tach.abstractors = append ( tach.abstractors, abstractor )
+
 
       case "new_topic" :
         name := msg.Data[0].Val.(string) 

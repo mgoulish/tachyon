@@ -1,3 +1,43 @@
+Fri 19 Jun 2020 02:34:11 AM EDT
+{
+  So how will it work?
+  Right now the Abstractors are just fns in app main.
+  Now app main will fill in the abs data structures, 
+  hand them to the library, and say "Go!"
+}
+
+
+Thu 18 Jun 2020 05:10:23 AM EDT
+{
+  OK!
+  Here's a concept.
+  An Abstractor is not a function, it's a data structure.
+    fp ( os.Stdout, "MDEBUG new: %d saved: %d\n", new_energy, saved_energy )
+
+  It contains fn pointers to all the fns that constitute the Abstractor, 
+  and each fn gets a pointer to that struct as its first arg.
+  In this way, a facility like the logger can tell the Abstractor
+  to visualize its results -- but control (with args) where the jpg
+  files go.
+
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  How about a logger?
+  I keep making debug print statements as I write individual 
+  Abstractors, but the whole idea is that eventually the activity 
+  between Abstractors will become too complex to follow -- without
+  a lot of help. So ... how about a logger that all Abstractors 
+  can send notes to about what they are doing.
+
+  And ... what does it do? For now, just timestamp everything 
+  and write it to a file.
+
+  And it makes everything into a single stream.
+}
+
+
+
+
 Tue 16 Jun 2020 12:23:22 AM EDT
 {
   For now, sensor will just be on a fixed timer.
