@@ -9,14 +9,14 @@ import (
 
 // Create histograms of the incoming images.
 
-func histogram ( tach * t.Tachyon ) ( ) {
+func histogram ( tach * t.Tachyon, me * t.Abstractor ) ( ) {
   // To subscribe to our topic, we must supply
   // the channel that the topic will use to communicate
   // to us.
   my_input_channel := make ( chan * t.Msg, 10 ) 
 
   // Send the request.
-  tach.Requests <- & t.Msg { []t.AV { { "subscribe", image_topic },
+  tach.Requests <- & t.Msg { []t.AV { { "subscribe", me.Subscribed_Topics[0] },
                                       { "channel",   my_input_channel }}}
 
   // Now read messages that the topic sends me.
@@ -56,16 +56,13 @@ func histogram ( tach * t.Tachyon ) ( ) {
 
 
       // Post the histogram !
-      tach.Requests <- & t.Msg { []t.AV {{ "post", histo_topic},
+      tach.Requests <- & t.Msg { []t.AV {{ "post", me.Output_Topic},
                                          { "data", histo},
                                          { "length", 768}}}
 
     }
   }
   
-  // TODO How should we really log stuff?
-  //      It should include the Tachyon as well as the App,
-  //      all the Abstractors, timestamps, everything.
   fp ( os.Stdout, "App: histogram exiting.\n" )
 }
 

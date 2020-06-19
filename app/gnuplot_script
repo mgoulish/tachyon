@@ -2,7 +2,7 @@ set autoscale
 unset key
 set ylabel "frequency"
 set xlabel "luminance window"
-set xrange [ 100 : ]
+#set xrange [ 100 : ]
 set terminal jpeg size 2000,500
 set output "plot.jpg"
 set title "luminance histogram"

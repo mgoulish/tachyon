@@ -9,14 +9,14 @@ import (
        )
 
 
-func smoothing ( tach * t.Tachyon ) {
+func smoothing ( tach * t.Tachyon, me * t.Abstractor ) {
   // To subscribe to our topic, we must supply
   // the channel that the topic will use to communicate
   // to us.
   my_input_channel := make ( chan * t.Msg, 10 )
 
   // Send the request.
-  tach.Requests <- & t.Msg { []t.AV { { "subscribe", histo_topic },
+  tach.Requests <- & t.Msg { []t.AV { { "subscribe", me.Subscribed_Topics[0] },
                                       { "channel",   my_input_channel }}}
 
   // Now read messages that the topic sends me.
@@ -72,10 +72,10 @@ func smoothing ( tach * t.Tachyon ) {
           // And smooth it again.
           smoothed = smooth ( smoothed, 10 )
           _, new_energy = count_reversals ( smoothed )
-          fp ( os.Stdout, "MDEBUG reversal energy after smooth %d: %d\n", i, new_energy )
+          fp ( os.Stdout, "smooth: reversal energy after smooth %d: %d\n", i, new_energy )
           display_histo ( fmt.Sprintf("smoothed_%d.jpg", i), smoothed )
           if new_energy >= min_energy {
-            fp ( os.Stdout, "MDEBUG done smoothing. Break 2.\n" )
+            fp ( os.Stdout, "smooth: done smoothing. Break 2.\n" )
             goto post
           }
         }
@@ -87,13 +87,13 @@ func smoothing ( tach * t.Tachyon ) {
     post :
     // Post the smoothed histogram !
     if saved_energy < new_energy {
-      fp ( os.Stdout, "MDEBUG posting smoothed histogram with reversal energy %d\n", saved_energy )
-      tach.Requests <- & t.Msg { []t.AV {{ "post", smoothed_histo_topic},
+      fp ( os.Stdout, "smooth: posting smoothed histogram with reversal energy %d\n", saved_energy )
+      tach.Requests <- & t.Msg { []t.AV {{ "post", me.Output_Topic},
                                    { "data", saved},
                                    { "length", 768}}}
     } else {
-      fp ( os.Stdout, "MDEBUG posting smoothed histogram with reversal energy %d\n", new_energy )
-      tach.Requests <- & t.Msg { []t.AV {{ "post", smoothed_histo_topic},
+      fp ( os.Stdout, "smooth: posting smoothed histogram with reversal energy %d\n", new_energy )
+      tach.Requests <- & t.Msg { []t.AV {{ "post", me.Output_Topic},
                                    { "data", smoothed},
                                    { "length", 768}}}
     }

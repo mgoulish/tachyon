@@ -26,10 +26,12 @@ type Msg struct {
 
 
 type Abstractor struct {
-  id int64
-  run func ( * Abstractor )
-  visualize func (* Abstractor)
-  subscribed_topics [] string
+  Name                 string
+  Output_Topic         string
+  Subscribed_Topics [] string
+
+  Run       func ( * Tachyon, * Abstractor )
+  Visualize func ( * Tachyon, * Abstractor )
 }
 
 
@@ -38,7 +40,7 @@ type Tachyon struct {
   Requests  chan * Msg
   Responses chan * Msg
 
-  abstractors [] Abstractor
+  abstractors [] *Abstractor
 }
 
 
@@ -91,13 +93,15 @@ func tach_input ( tach * Tachyon ) {
       
       // Topics can't have any of the following keywords as their namnes.
 
-      case "new_abstractor" :
-        abstractor, ok := msg.Data[0].Val.(Abstractor)
+      case "add_abstractor" :
+        abstractor, ok := msg.Data[0].Val.(*Abstractor)
         if ! ok {
           fp ( os.Stdout, "tachyon error: no abstractor in new_abstractor message.\n" )
+          fp ( os.Stdout, "MDEBUG type is |%T|\n", abstractor )
           os.Exit ( 1 )
         }
         tach.abstractors = append ( tach.abstractors, abstractor )
+        fp ( os.Stdout, "Tachyon: added abstractor |%s|\n", abstractor.Name )
 
 
       case "new_topic" :
@@ -126,6 +130,15 @@ func tach_input ( tach * Tachyon ) {
           fp ( os.Stdout, "tach_input error: no such topic: |%s|\n", topic_name )
         }
         topic.subscribe ( channel )
+
+
+
+      case "start abstractors" :
+        fp ( os.Stdout, "tachyon: starting abstractors.\n" )
+        for _, a := range tach.abstractors {
+          fp ( os.Stdout, "tachyon: starting |%s|\n", a.Name )
+          go a.Run ( tach, a )
+        }
 
 
 

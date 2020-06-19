@@ -13,9 +13,6 @@ import (
 var fp = fmt.Fprintf
 
 
-var image_topic          string
-var histo_topic          string
-var smoothed_histo_topic string
 var n_topics             int
 
 
@@ -29,22 +26,50 @@ func main ( ) {
   tach := t.New_Tachyon ( )
   go responses ( tach )
 
-  // Add its first topic: image.
-  // This will be the topic that the basic sensor posts to.
-  // The listener will start up the Abstractors when this
-  // topic has been created.
-  image_topic = "image"
-  tach.Requests <- & t.Msg { []t.AV { { "new_topic", image_topic } } }
-  n_topics ++
+  //------------------------------------------
+  // Make the topics.
+  //------------------------------------------
+  topics := []string { "image",
+                       "histogram",
+                       "smoothed_histogram",
+                     }
+  n_topics = len(topics)
+  for _, topic := range topics {
+    tach.Requests <- & t.Msg { []t.AV { { "new_topic", topic } } }
+  }
 
-  histo_topic = "histo"
-  tach.Requests <- & t.Msg { []t.AV { { "new_topic", histo_topic } } }
-  n_topics ++
+  //------------------------------------------
+  // Make the Abstractors.
+  //------------------------------------------
 
-  smoothed_histo_topic = "smoothed_histo"
-  tach.Requests <- & t.Msg { []t.AV { { "new_topic", smoothed_histo_topic } } }
-  n_topics ++
+  // sensor ------------------------------------------------
+  sensor := & t.Abstractor { Name         : "sensor",
+                             Run          : sensor,
+                             Output_Topic : "image",
+                           } 
+  tach.Requests <- & t.Msg { []t.AV{ {"add_abstractor", sensor} } }
 
+
+  // histogram ------------------------------------------------
+  histo  := & t.Abstractor { Name         : "histogram",
+                             Run          : histogram,
+                             Subscribed_Topics : []string{ "image" },
+                             Output_Topic : "histogram",
+                           } 
+  tach.Requests <- & t.Msg { []t.AV{ {"add_abstractor", histo} } }
+
+
+  // smoothing ------------------------------------------------
+  smooth := & t.Abstractor { Name         : "smoothing",
+                             Run          : smoothing,
+                             Subscribed_Topics : []string{ "histogram" },
+                             Output_Topic : "smoothed_histogram",
+                           } 
+  tach.Requests <- & t.Msg { []t.AV{ {"add_abstractor", smooth} } }
+
+
+
+  // Quit when the user hits 'enter'.
   var s string
   fmt.Scanf ( "%s", & s )
 }
@@ -62,16 +87,13 @@ func responses ( tach * t.Tachyon ) {
 
     if msg.Data[0].Attr == "new_topic" {
       created_topics ++
-      fp ( os.Stdout, "MDEBUG responses: %d created topics.\n" , created_topics)
+      fp ( os.Stdout, "App: response: %d created topics.\n" , created_topics)
     }
 
     if created_topics >= n_topics && abstractors_started == false {
-      fp ( os.Stdout, "MDEBUG starting abstractors.\n" )
       abstractors_started = true
-      fp ( os.Stdout, "App: All topics have been created. Starting Abstractors.\n" )
-      go sensor    ( tach )
-      go histogram ( tach ) 
-      go smoothing ( tach )
+      fp ( os.Stdout, "App: starting abstractors.\n" )
+      tach.Requests <- & t.Msg { []t.AV{ {"start abstractors", nil} } }
     }
   }
 }
