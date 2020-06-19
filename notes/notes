@@ -4,6 +4,38 @@ Fri 19 Jun 2020 02:34:11 AM EDT
   Right now the Abstractors are just fns in app main.
   Now app main will fill in the abs data structures, 
   hand them to the library, and say "Go!"
+
+  OK! right away, I have something interesting with
+  threshold.
+  It would be *really nice* if it could refer back to the 
+  original image, and apply its threshold to that, in order
+  to do a visualization of the results.
+
+  How?
+
+  By
+    1. having a 'genealogy' of abstractions that its abstraction
+       came from.
+         i.e. the image sensor adds a stamp to its post message
+              that says "image" "1"
+              hmmm.
+              Just names like that do not imply ordering, so 
+              things all have to know which comes first.
+              And what if the order is data-dependent.
+
+         OK, so we need a 'path' :
+            { 
+              {"image", "1"},
+              {"histogram", "1"},
+              ...
+            }
+
+         Every Abstractor assigns a unique ID to each of its 
+         output abstractions, and appends this 'atep' to the end of
+         the 'path'.
+         So if anybody wants to, they can see where this abstraction came from.
+
+         AND THEN THE BULLETIN BOARD STORES THEM ALL.
 }
 
 

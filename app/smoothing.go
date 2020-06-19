@@ -49,12 +49,12 @@ func smoothing ( tach * t.Tachyon, me * t.Abstractor ) {
       }
       
       _, min_energy = count_reversals ( histo )
-      fp ( os.Stdout, "MDEBUG reversal energy original : %d\n", min_energy )
+      fp ( os.Stdout, "smooth: reversal energy original : %d\n", min_energy )
       display_histo ( "original.jpg", histo )
 
-      smoothed = smooth ( histo, 10 )
+      smoothed = smooth ( histo )
       _, new_energy = count_reversals ( smoothed )
-      fp ( os.Stdout, "MDEBUG reversal energy after smooth %d: %d\n", 1, new_energy )
+      fp ( os.Stdout, "smooth: reversal energy after smooth %d: %d\n", 1, new_energy )
       display_histo ( "smoothed_1.jpg", smoothed )
 
       if new_energy >= min_energy {
@@ -70,10 +70,11 @@ func smoothing ( tach * t.Tachyon, me * t.Abstractor ) {
           saved = smoothed
           saved_energy = min_energy
           // And smooth it again.
-          smoothed = smooth ( smoothed, 10 )
+          smoothed = smooth ( smoothed )
           _, new_energy = count_reversals ( smoothed )
           fp ( os.Stdout, "smooth: reversal energy after smooth %d: %d\n", i, new_energy )
           display_histo ( fmt.Sprintf("smoothed_%d.jpg", i), smoothed )
+
           if new_energy >= min_energy {
             fp ( os.Stdout, "smooth: done smoothing. Break 2.\n" )
             goto post
@@ -135,15 +136,20 @@ func count_reversals ( histo [768] uint32 ) ( int, int64 ) {
 
 
 
-func smooth ( histo [768] uint32, size uint32 ) ( [768] uint32 ) {
+func smooth ( histo [768] uint32 ) ( [768] uint32 ) {
   smoothed := histo
 
-  for i := uint32(0); i < 768 - size; i ++ {
+  half_kernel := uint32(5)
+
+  // Do the convolution sum half to the left and
+  // half to the right 
+
+  for i := uint32(half_kernel); i < 768 - (half_kernel + 1); i ++ {
     sum := uint32(0)
-    for j := i; j < i + size; j ++ {
+    for j := i - half_kernel; j <= i + half_kernel; j ++ {
       sum += histo[j]
     }
-    smoothed[i] = sum / size
+    smoothed[i] = sum / ((2 * half_kernel) + 1)
   }
   return smoothed
 }
@@ -173,3 +179,16 @@ func display_histo ( file_name string, histo [768] uint32 ) {
 
 
 
+func find_max ( histo [768] uint32 ) ( uint32, uint32 ) {
+
+  var max_val, max_pos uint32
+
+  max_val = 0
+  for i := uint32(0); i < 768; i ++ {
+    if histo[i] > max_val {
+      max_val = histo[i]
+      max_pos = i
+    }
+  }
+  return max_val, max_pos
+}

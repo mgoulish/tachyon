@@ -69,6 +69,15 @@ func main ( ) {
 
 
 
+  // threshold ------------------------------------------------
+  thresh := & t.Abstractor { Name         : "threshold",
+                             Run          : threshold,
+                             Subscribed_Topics : []string{ "smoothed_histogram" },
+                           } 
+  tach.Requests <- & t.Msg { []t.AV{ {"add_abstractor", thresh} } }
+
+
+
   // Quit when the user hits 'enter'.
   var s string
   fmt.Scanf ( "%s", & s )
