@@ -35,7 +35,8 @@ func main ( ) {
                      }
   n_topics = len(topics)
   for _, topic := range topics {
-    tach.Requests <- & t.Msg { []t.AV { { "new_topic", topic } } }
+    tach.Requests <- t.Message { "request" : "new_topic",
+                                 "name"   : topic }
   }
 
   //------------------------------------------
@@ -47,7 +48,8 @@ func main ( ) {
                              Run          : sensor,
                              Output_Topic : "image",
                            } 
-  tach.Requests <- & t.Msg { []t.AV{ {"add_abstractor", sensor} } }
+  tach.Requests <- t.Message { "request"    : "add_abstractor",
+                               "abstractor" : sensor }
 
 
   // histogram ------------------------------------------------
@@ -56,7 +58,8 @@ func main ( ) {
                              Subscribed_Topics : []string{ "image" },
                              Output_Topic : "histogram",
                            } 
-  tach.Requests <- & t.Msg { []t.AV{ {"add_abstractor", histo} } }
+  tach.Requests <- t.Message { "request"    : "add_abstractor",
+                               "abstractor" : histo }
 
 
   // smoothing ------------------------------------------------
@@ -65,7 +68,8 @@ func main ( ) {
                              Subscribed_Topics : []string{ "histogram" },
                              Output_Topic : "smoothed_histogram",
                            } 
-  tach.Requests <- & t.Msg { []t.AV{ {"add_abstractor", smooth} } }
+  tach.Requests <- t.Message { "request"    : "add_abstractor",
+                               "abstractor" : smooth }
 
 
 
@@ -74,7 +78,8 @@ func main ( ) {
                              Run          : threshold,
                              Subscribed_Topics : []string{ "smoothed_histogram" },
                            } 
-  tach.Requests <- & t.Msg { []t.AV{ {"add_abstractor", thresh} } }
+  tach.Requests <- t.Message { "request"    : "add_abstractor",
+                               "abstractor" : thresh }
 
 
 
@@ -94,7 +99,7 @@ func responses ( tach * t.Tachyon ) {
   for {
     msg := <- tach.Responses
 
-    if msg.Data[0].Attr == "new_topic" {
+    if msg["response"] == "new_topic" {
       created_topics ++
       fp ( os.Stdout, "App: response: %d created topics.\n" , created_topics)
     }
@@ -102,7 +107,7 @@ func responses ( tach * t.Tachyon ) {
     if created_topics >= n_topics && abstractors_started == false {
       abstractors_started = true
       fp ( os.Stdout, "App: starting abstractors.\n" )
-      tach.Requests <- & t.Msg { []t.AV{ {"start abstractors", nil} } }
+      tach.Requests <- t.Message { "request": "start abstractors" }
     }
   }
 }

@@ -15,16 +15,10 @@ var fp = fmt.Fprintf
 //  Public
 //=================================================================
 
-type AV struct {
-  Attr string
-  Val  interface{}
-}
-
-type Msg struct {
-  Data [] AV
-}
 
 
+// These are the processors that cooperate to
+// build up an understanding of the input image.
 type Abstractor struct {
   Name                 string
   Output_Topic         string
@@ -36,9 +30,25 @@ type Abstractor struct {
 
 
 
+type  Message  map[string]interface{}
+
+
+
+// These are the artifacts that each Abstractor
+// posts as a result of its work.
+type Abstraction struct {
+  Abstractor_Name string
+  Abstraction_ID  int64    // Only unique within the namespace of this Abstractor's posts.
+  Msg             Message
+}
+
+
+
 type Tachyon struct {
-  Requests  chan * Msg
-  Responses chan * Msg
+  Requests     chan Message       // from App to Tachyon
+  Responses    chan Message       // from Tachyon to App
+  Abstractions chan * Abstraction // from Abstractors to Tachyon
+
 
   abstractors [] *Abstractor
 }
@@ -48,27 +58,12 @@ type Tachyon struct {
 
 
 func New_Tachyon ( ) ( * Tachyon ) {
-  tach := & Tachyon { Requests  : make ( chan * Msg, 100 ),
-                      Responses : make ( chan * Msg, 100 ),
+  tach := & Tachyon { Requests  : make ( chan Message, 100 ),
+                      Responses : make ( chan Message, 100 ),
                     }
-  go tach_input ( tach )
+  go tach_requests ( tach )
 
   return tach
-}
-
-
-
-
-
-func Get_Val_From_Msg ( attr string, msg * Msg ) ( interface{} ) {
-  for _, pair := range msg.Data {
-    if attr == pair.Attr {
-      //fp ( os.Stdout, "MDEBUG Get_Val_From_Msg type is %T\n", pair.Val )
-      return pair.Val
-    }
-  }
-
-  return nil
 }
 
 
@@ -79,7 +74,7 @@ func Get_Val_From_Msg ( attr string, msg * Msg ) ( interface{} ) {
 //  Private
 //=================================================================
 
-func tach_input ( tach * Tachyon ) {
+func tach_requests ( tach * Tachyon ) {
 
   topics := make ( map[string] * Topic )
 
@@ -89,14 +84,14 @@ func tach_input ( tach * Tachyon ) {
       break
     }
 
-    switch msg.Data[0].Attr {
+    switch msg["request"] {
       
       // Topics can't have any of the following keywords as their namnes.
 
       case "add_abstractor" :
-        abstractor, ok := msg.Data[0].Val.(*Abstractor)
+        abstractor, ok := msg["abstractor"].(*Abstractor)
         if ! ok {
-          fp ( os.Stdout, "tachyon error: no abstractor in new_abstractor message.\n" )
+          fp ( os.Stdout, "tachyon tach_requests error: no abstractor in new_abstractor message.\n" )
           fp ( os.Stdout, "MDEBUG type is |%T|\n", abstractor )
           os.Exit ( 1 )
         }
@@ -104,32 +99,38 @@ func tach_input ( tach * Tachyon ) {
         fp ( os.Stdout, "Tachyon: added abstractor |%s|\n", abstractor.Name )
 
 
+
       case "new_topic" :
-        name := msg.Data[0].Val.(string) 
+        name, ok := msg["name"].(string) 
+        if ! ok {
+          fp ( os.Stdout, "tachyon tach_requests error: new_topic: no string value for |name|\n" )
+          continue
+        }
         top  := New_Topic ( name )
         topics [ name ] = top
         // Tell the App that the topic has been created.
-        tach.Responses <- & Msg { []AV { { "new_topic", name } } }
+        tach.Responses <- Message { "response" : "new_topic",
+                                    "name"     : name }
 
 
 
       case "subscribe" :
-        topic_name, ok := Get_Val_From_Msg("subscribe", msg).(string)
+        topic_name, ok := msg["topic"].(string)
         if ! ok {
-          fp ( os.Stdout, "tach_input error: subscribe with no topic name |%#v|\n", msg )
+          fp ( os.Stdout, "tach_requests error: subscribe with no topic |%#v|\n", msg )
           continue
         }
-        channel, ok := Get_Val_From_Msg("channel", msg).(chan * Msg)
+        channel, ok := msg["channel"].(chan Message)
         if ! ok {
-          fp ( os.Stdout, "tach_input error: subscribe with no channel |%#v|\n", msg )
+          fp ( os.Stdout, "tach_requests error: subscribe with no channel |%#v|\n", msg )
           continue
         }
-        // subscribers = append ( subscribers, channel )
         topic, ok := topics [ topic_name ]
         if ! ok {
-          fp ( os.Stdout, "tach_input error: no such topic: |%s|\n", topic_name )
+          fp ( os.Stdout, "tach_requests error: no such topic: |%s|\n", topic_name )
         }
         topic.subscribe ( channel )
+        // The topic will send a confirmation message.
 
 
 
@@ -143,42 +144,28 @@ func tach_input ( tach * Tachyon ) {
 
 
       case "post" :
-        topic_name, ok := Get_Val_From_Msg("post", msg).(string)
+        topic_name, ok := msg["topic"].(string)
         if ! ok {
-          fp ( os.Stdout, "tach_input error: post with no topic name |%#v|\n", msg )
+          fp ( os.Stdout, "tach_requests error: post with no topic name |%#v|\n", msg )
           continue
         }
         top := topics [ topic_name ]
 
-        fp ( os.Stdout, "MDEBUG tach_input got post for |%s|\n", topic_name )
+        fp ( os.Stdout, "tachyon: tach_requests got post for |%s|\n", topic_name )
 
-        // No need to remove the Attr-Val pair that describes the topic.
-        // End-users will simply ignore it.
+        // Post the whole message to the desired topic.
+        // End-users will simply ignore key-value pairs that they do not need.
         top.post ( msg )
 
 
 
-
       default :
-        
-        // Actually I think this is archaic and unused.
-        // Let's see...
-
-        fp ( os.Stdout, "MDEBUG Oops. I guess not.\n" )
+        fp ( os.Stdout, "tachyon: tach_requests error: unknown request |%s|\n", msg["request"] )
         os.Exit ( 1 )
-
-        // Any other word must be a topic name.
-        top_name := msg.Data[0].Attr
-        top, ok := topics [ top_name ]
-        if ! ok {
-          fp ( os.Stdout, "tach_input error: Can't find topic |%s|\n", top_name )
-          continue
-        }
-        top.inputs <- msg
     }
   }
 
-  fp ( os.Stdout, "tach_input exiting.\n" )
+  fp ( os.Stdout, "tach_requests exiting.\n" )
 }
 
 

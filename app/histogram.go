@@ -13,11 +13,12 @@ func histogram ( tach * t.Tachyon, me * t.Abstractor ) ( ) {
   // To subscribe to our topic, we must supply
   // the channel that the topic will use to communicate
   // to us.
-  my_input_channel := make ( chan * t.Msg, 10 ) 
+  my_input_channel := make ( chan t.Message, 10 ) 
 
   // Send the request.
-  tach.Requests <- & t.Msg { []t.AV { { "subscribe", me.Subscribed_Topics[0] },
-                                      { "channel",   my_input_channel }}}
+  tach.Requests <- t.Message { "request" : "subscribe", 
+                               "topic"   : me.Subscribed_Topics[0],
+                               "channel" : my_input_channel }
 
   // Now read messages that the topic sends me.
   message_count := 0
@@ -28,18 +29,19 @@ func histogram ( tach * t.Tachyon, me * t.Abstractor ) ( ) {
     if message_count == 1 {
       // The first message on my channel should be a confirmation
       // from Tachyon that we are subscribed to the correct channel.
-      if msg.Data[0].Attr != "subscribed" {
+      if msg["response"] != "subscribed" {
         // Something bad happened.
-        fp ( os.Stdout, "App: histogram: error: |%s|\n", msg.Data[0].Attr )
+        fp ( os.Stdout, "App: histogram: error: failed to subscribe to |%s|\n", me.Subscribed_Topics[0] )
+        fp ( os.Stdout, "histogram got this message: |%#v|\n", msg )
         break
       }
       fp ( os.Stdout, "App: histogram: got subscription confirmation.\n" )
     } else {
       // This is a real message.
       fp ( os.Stdout, "App: histogram: got msg!\n" )
-      image, ok := t.Get_Val_From_Msg("data", msg).(*t.Image)
+      image, ok := msg["data"].(*t.Image)
       if ! ok {
-        fp ( os.Stdout, "tach_input error: post data does not contain an image.\n" )
+        fp ( os.Stdout, "App: histogram error: data does not contain a histogram.\n" )
         continue
       }
 
@@ -56,9 +58,9 @@ func histogram ( tach * t.Tachyon, me * t.Abstractor ) ( ) {
 
 
       // Post the histogram !
-      tach.Requests <- & t.Msg { []t.AV {{ "post", me.Output_Topic},
-                                         { "data", histo},
-                                         { "length", 768}}}
+      tach.Requests <- t.Message { "request" : "post",
+                                   "topic"   : me.Output_Topic,
+                                   "data"    : histo }
 
     }
   }

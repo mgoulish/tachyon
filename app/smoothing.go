@@ -13,11 +13,12 @@ func smoothing ( tach * t.Tachyon, me * t.Abstractor ) {
   // To subscribe to our topic, we must supply
   // the channel that the topic will use to communicate
   // to us.
-  my_input_channel := make ( chan * t.Msg, 10 )
+  my_input_channel := make ( chan t.Message, 10 )
 
   // Send the request.
-  tach.Requests <- & t.Msg { []t.AV { { "subscribe", me.Subscribed_Topics[0] },
-                                      { "channel",   my_input_channel }}}
+  tach.Requests <- t.Message { "request" : "subscribe",
+                               "topic"   : me.Subscribed_Topics[0],
+                               "channel" : my_input_channel }
 
   // Now read messages that the topic sends me.
   message_count := 0
@@ -31,18 +32,18 @@ func smoothing ( tach * t.Tachyon, me * t.Abstractor ) {
     if message_count == 1 {
       // The first message on my channel should be a confirmation
       // from Tachyon that we are subscribed to the correct channel.
-      if msg.Data[0].Attr != "subscribed" {
+      if msg["response"] != "subscribed" {
         // Something bad happened.
-        fp ( os.Stdout, "App: histogram: error: |%s|\n", msg.Data[0].Attr )
+        fp ( os.Stdout, "App: %s: error: Failed to subscribe to |%s|\n", me.Name, me.Subscribed_Topics[0] )
         break
       }
     
-      fp ( os.Stdout, "App: smoothing: got subscription confirmation.\n" )
+      fp ( os.Stdout, "App: %s: got subscription confirmation.\n", me.Name )
     } else {
       // This is a real message.
-      fp ( os.Stdout, "App: smoothing: got msg!\n" )
+      fp ( os.Stdout, "App: %s: got msg!\n", me.Name )
 
-      histo, ok := t.Get_Val_From_Msg("data", msg).([768]uint32)
+      histo, ok := msg["data"].([768]uint32)
       if ! ok {
         fp ( os.Stdout, "App: smoothing: did not get uint32 array.\n" )
         os.Exit ( 1 )
@@ -89,14 +90,14 @@ func smoothing ( tach * t.Tachyon, me * t.Abstractor ) {
     // Post the smoothed histogram !
     if saved_energy < new_energy {
       fp ( os.Stdout, "smooth: posting smoothed histogram with reversal energy %d\n", saved_energy )
-      tach.Requests <- & t.Msg { []t.AV {{ "post", me.Output_Topic},
-                                   { "data", saved},
-                                   { "length", 768}}}
+      tach.Requests <- t.Message { "request" : "post",
+                                   "topic"   : me.Output_Topic,
+                                   "data"    : saved }
     } else {
       fp ( os.Stdout, "smooth: posting smoothed histogram with reversal energy %d\n", new_energy )
-      tach.Requests <- & t.Msg { []t.AV {{ "post", me.Output_Topic},
-                                   { "data", smoothed},
-                                   { "length", 768}}}
+      tach.Requests <- t.Message { "request" : "post",
+                                   "topic"   : me.Output_Topic,
+                                   "data"    : smoothed }
     }
   }
 }

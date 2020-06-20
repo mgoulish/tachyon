@@ -23,7 +23,9 @@ func sensor ( tach * t.Tachyon, me * t.Abstractor ) {
     image_file_name := fmt.Sprintf ( "/home/annex_2/vision_data/apollo/docking_with_lem/image-%04d.jpg", i )
     image := t.Read_Image ( image_file_name )
     fp ( os.Stdout, "\n\n\nApp: sensor: %s\n", image_file_name )
-    tach.Requests <- & t.Msg { []t.AV { {"post", me.Output_Topic}, {"data", image} } }
+    tach.Requests <- t.Message { "request" : "post",
+                                 "topic"   : me.Output_Topic,
+                                 "data"    : image }
   }
 }
 
