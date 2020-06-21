@@ -80,16 +80,21 @@ func smoothing ( tach * t.Tachyon, me * t.Abstractor ) {
     // Post the smoothed histogram !
     if saved_energy < new_energy {
       fp ( os.Stdout, "smooth: posting smoothed histogram with reversal energy %d\n", saved_energy )
-      tach.Abstractions <- & t.Abstraction { ID  : t.Abstraction_ID { Abstractor_Name : me.Name, ID : id },
-                                             Msg : t.Message { "request" : "post",
-                                                               "topic"   : me.Output_Topic,
-                                                               "data"    : saved } }
+      a := & t.Abstraction { ID  : t.Abstraction_ID { Abstractor_Name : me.Name, ID : id },
+                             Msg : t.Message { "request" : "post",
+                                               "topic"   : me.Output_Topic,
+                                               "data"    : saved } }
+      a.Timestamp()
+      tach.Abstractions <- a
     } else {
       fp ( os.Stdout, "smooth: posting smoothed histogram with reversal energy %d\n", new_energy )
-      tach.Abstractions <- & t.Abstraction { ID  : t.Abstraction_ID { Abstractor_Name : me.Name, ID : id },
-                                             Msg : t.Message { "request" : "post",
-                                                               "topic"   : me.Output_Topic,
-                                                               "data"    : smoothed } }
+      a := & t.Abstraction { ID  : t.Abstraction_ID { Abstractor_Name : me.Name, ID : id },
+                             Msg : t.Message { "request" : "post",
+                                               "topic"   : me.Output_Topic,
+                                               "data"    : smoothed } }
+
+      a.Timestamp()
+      tach.Abstractions <- a
     }
   }
 }

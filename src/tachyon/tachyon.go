@@ -4,6 +4,7 @@ package tachyon
 import (
          "fmt"
          "os"
+         "time"
        )
 
 
@@ -46,7 +47,7 @@ type Abstraction struct {
   ID              Abstraction_ID
   Topic           string
   Msg             Message
-  Timestamp       float64
+  Creation_Time   float64
 }
 
 
@@ -201,6 +202,17 @@ func abstractions ( tach * Tachyon ) {
     // And let the Bulletin Board know about it.
     tach.abstractions_to_bb <- abstraction
   }
+}
+
+
+
+
+
+// Stamp the Abstraction with the number of nanoseconds 
+// since Bill Joy came to Ann Arbor.
+func (a * Abstraction) Timestamp () {
+  now := time.Now()
+  a.Creation_Time = float64 ( now.UnixNano() ) / 1000000000.0
 }
 
 

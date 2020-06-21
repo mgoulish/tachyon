@@ -50,10 +50,14 @@ func threshold ( tach * t.Tachyon, me * t.Abstractor ) ( ) {
     }
     
     id ++
-    tach.Abstractions <- & t.Abstraction { ID  : t.Abstraction_ID { Abstractor_Name : me.Name, ID : id },
-                                           Msg : t.Message { "request" : "post",
-                                                             "topic"   : me.Output_Topic,
-                                                             "data"    : thresh } }
+    a := & t.Abstraction { ID  : t.Abstraction_ID { Abstractor_Name : me.Name, ID : id },
+                           Msg : t.Message { "request" : "post",
+                                             "topic"   : me.Output_Topic,
+                                             "data"    : thresh } }
+
+    a.Timestamp()
+    fp ( os.Stdout, "MDEBUG thresh: |%f|\n", a.Creation_Time )
+    tach.Abstractions <- a
   }
   
   fp ( os.Stdout, "App: %s exiting.\n", me.Name )
