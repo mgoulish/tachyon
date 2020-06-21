@@ -32,6 +32,7 @@ func main ( ) {
   topics := []string { "image",
                        "histogram",
                        "smoothed_histogram",
+                       "threshold",
                      }
   n_topics = len(topics)
   for _, topic := range topics {
@@ -77,6 +78,7 @@ func main ( ) {
   thresh := & t.Abstractor { Name              : "threshold",
                              Run               : threshold,
                              Subscribed_Topics : []string{ "smoothed_histogram" },
+                             Output_Topic      : "threshold",
                            } 
   tach.Requests <- t.Message { "request"    : "add_abstractor",
                                "abstractor" : thresh }

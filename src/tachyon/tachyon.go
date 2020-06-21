@@ -46,12 +46,15 @@ type Abstraction struct {
 
 
 type Tachyon struct {
-  Requests     chan Message       // from App to Tachyon
-  Responses    chan Message       // from Tachyon to App
+  Requests     chan   Message     // from App to Tachyon
+  Responses    chan   Message     // from Tachyon to App
   Abstractions chan * Abstraction // from Abstractors to Tachyon, and then out to the Topics.
 
   abstractors  [] *Abstractor
   topics       map[string] * Topic
+
+  abstractions_to_bb chan * Abstraction
+  requests_to_bb     chan   Message
 }
 
 
@@ -63,8 +66,13 @@ func New_Tachyon ( ) ( * Tachyon ) {
                       Responses    : make ( chan Message, 100 ),
                       Abstractions : make ( chan * Abstraction, 100 ),
 
-                      topics       : make ( map[string] *Topic ),
+                      topics       : make ( map[string] * Topic ),
+
+                      abstractions_to_bb : make ( chan * Abstraction, 100 ),
+                      requests_to_bb     : make ( chan Message, 100 ),
                     }
+
+  go bulletin_board ( tach )
   go requests     ( tach )
   go abstractions ( tach )
 
@@ -111,6 +119,8 @@ func requests ( tach * Tachyon ) {
         }
         top  := New_Topic ( name )
         tach.topics [ name ] = top
+        // Let the Bulletin Board know about it.
+        tach.requests_to_bb <- msg
         // Tell the App that the topic has been created.
         tach.Responses <- Message { "response" : "new_topic",
                                     "name"     : name }
@@ -182,6 +192,8 @@ func abstractions ( tach * Tachyon ) {
 
     topic.post ( abstraction )
 
+    // And let the Bulletin Board know about it.
+    tach.abstractions_to_bb <- abstraction
   }
 }
 
