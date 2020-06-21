@@ -27,9 +27,8 @@ func sensor ( tach * t.Tachyon, me * t.Abstractor ) {
     image := t.Read_Image ( image_file_name )
     fp ( os.Stdout, "\n\n\nApp: sensor: %s\n", image_file_name )
     id ++
-    tach.Abstractions <- & t.Abstraction { Abstractor_Name : me.Name,
-                                           Abstraction_ID  : id,
-                                           Msg             : t.Message { "request" : "post",
+    tach.Abstractions <- & t.Abstraction { ID  : t.Abstraction_ID { Abstractor_Name : me.Name, ID : id },
+                                           Msg : t.Message { "request" : "post",
                                                              "topic"   : me.Output_Topic,
                                                              "data"    : image } }
   }

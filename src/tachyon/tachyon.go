@@ -33,14 +33,20 @@ type Abstractor struct {
 type  Message  map[string]interface{}
 
 
+type Abstraction_ID struct {
+  Abstractor_Name string
+  ID              uint64    // Only unique within the namespace of this Abstractor's posts.
+}
+
+
 
 // These are the artifacts that each Abstractor
 // posts as a result of its work.
 type Abstraction struct {
-  Abstractor_Name string
-  Abstraction_ID  uint64    // Only unique within the namespace of this Abstractor's posts.
+  ID              Abstraction_ID
   Topic           string
   Msg             Message
+  Timestamp       float64
 }
 
 

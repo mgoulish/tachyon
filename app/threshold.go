@@ -50,11 +50,10 @@ func threshold ( tach * t.Tachyon, me * t.Abstractor ) ( ) {
     }
     
     id ++
-    tach.Abstractions <- & t.Abstraction { Abstractor_Name : me.Name,
-                                           Abstraction_ID  : id,
-                                           Msg             : t.Message { "request" : "post",
-                                                                         "topic"   : me.Output_Topic,
-                                                                         "data"    : thresh } }
+    tach.Abstractions <- & t.Abstraction { ID  : t.Abstraction_ID { Abstractor_Name : me.Name, ID : id },
+                                           Msg : t.Message { "request" : "post",
+                                                             "topic"   : me.Output_Topic,
+                                                             "data"    : thresh } }
   }
   
   fp ( os.Stdout, "App: %s exiting.\n", me.Name )

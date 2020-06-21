@@ -50,11 +50,10 @@ func histogram ( tach * t.Tachyon, me * t.Abstractor ) ( ) {
 
     // Post the histogram !
     id ++
-    tach.Abstractions <- & t.Abstraction { Abstractor_Name : me.Name,
-                                           Abstraction_ID  : id,
-                                           Msg             : t.Message { "request" : "post",
-                                                                         "topic"   : me.Output_Topic,
-                                                                         "data"    : histo } }
+    tach.Abstractions <- & t.Abstraction { ID  : t.Abstraction_ID { Abstractor_Name : me.Name, ID : id },
+                                           Msg : t.Message { "request" : "post",
+                                                             "topic"   : me.Output_Topic,
+                                                             "data"    : histo } }
   }
   fp ( os.Stdout, "App: histogram exiting.\n" )
 }
