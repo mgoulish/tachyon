@@ -38,7 +38,8 @@ type  Message  map[string]interface{}
 // posts as a result of its work.
 type Abstraction struct {
   Abstractor_Name string
-  Abstraction_ID  int64    // Only unique within the namespace of this Abstractor's posts.
+  Abstraction_ID  uint64    // Only unique within the namespace of this Abstractor's posts.
+  Topic           string
   Msg             Message
 }
 
@@ -47,10 +48,10 @@ type Abstraction struct {
 type Tachyon struct {
   Requests     chan Message       // from App to Tachyon
   Responses    chan Message       // from Tachyon to App
-  Abstractions chan * Abstraction // from Abstractors to Tachyon
+  Abstractions chan * Abstraction // from Abstractors to Tachyon, and then out to the Topics.
 
-
-  abstractors [] *Abstractor
+  abstractors  [] *Abstractor
+  topics       map[string] * Topic
 }
 
 
@@ -58,10 +59,14 @@ type Tachyon struct {
 
 
 func New_Tachyon ( ) ( * Tachyon ) {
-  tach := & Tachyon { Requests  : make ( chan Message, 100 ),
-                      Responses : make ( chan Message, 100 ),
+  tach := & Tachyon { Requests     : make ( chan Message, 100 ),
+                      Responses    : make ( chan Message, 100 ),
+                      Abstractions : make ( chan * Abstraction, 100 ),
+
+                      topics       : make ( map[string] *Topic ),
                     }
-  go tach_requests ( tach )
+  go requests     ( tach )
+  go abstractions ( tach )
 
   return tach
 }
@@ -74,9 +79,7 @@ func New_Tachyon ( ) ( * Tachyon ) {
 //  Private
 //=================================================================
 
-func tach_requests ( tach * Tachyon ) {
-
-  topics := make ( map[string] * Topic )
+func requests ( tach * Tachyon ) {
 
   for {
     msg, more := <- tach.Requests
@@ -107,7 +110,7 @@ func tach_requests ( tach * Tachyon ) {
           continue
         }
         top  := New_Topic ( name )
-        topics [ name ] = top
+        tach.topics [ name ] = top
         // Tell the App that the topic has been created.
         tach.Responses <- Message { "response" : "new_topic",
                                     "name"     : name }
@@ -120,12 +123,13 @@ func tach_requests ( tach * Tachyon ) {
           fp ( os.Stdout, "tach_requests error: subscribe with no topic |%#v|\n", msg )
           continue
         }
-        channel, ok := msg["channel"].(chan Message)
+        channel, ok := msg["channel"].(chan * Abstraction)
         if ! ok {
           fp ( os.Stdout, "tach_requests error: subscribe with no channel |%#v|\n", msg )
-          continue
+          fp ( os.Stdout, "MDEBUG type is %T\n", channel )
+          os.Exit ( 1 )
         }
-        topic, ok := topics [ topic_name ]
+        topic, ok := tach.topics [ topic_name ]
         if ! ok {
           fp ( os.Stdout, "tach_requests error: no such topic: |%s|\n", topic_name )
         }
@@ -143,22 +147,6 @@ func tach_requests ( tach * Tachyon ) {
 
 
 
-      case "post" :
-        topic_name, ok := msg["topic"].(string)
-        if ! ok {
-          fp ( os.Stdout, "tach_requests error: post with no topic name |%#v|\n", msg )
-          continue
-        }
-        top := topics [ topic_name ]
-
-        fp ( os.Stdout, "tachyon: tach_requests got post for |%s|\n", topic_name )
-
-        // Post the whole message to the desired topic.
-        // End-users will simply ignore key-value pairs that they do not need.
-        top.post ( msg )
-
-
-
       default :
         fp ( os.Stdout, "tachyon: tach_requests error: unknown request |%s|\n", msg["request"] )
         os.Exit ( 1 )
@@ -166,6 +154,35 @@ func tach_requests ( tach * Tachyon ) {
   }
 
   fp ( os.Stdout, "tach_requests exiting.\n" )
+}
+
+
+
+
+// All abstractions posted by the Abstractots come here, 
+// before being sent out to their individual topics.
+func abstractions ( tach * Tachyon ) {
+  for {
+    abstraction, more := <- tach.Abstractions
+    if ! more {
+      break
+    }
+    
+    topic_name, ok := abstraction.Msg["topic"].(string)
+    if ! ok {
+      fp ( os.Stdout, "Tachyon error: abstractions: no topic name in this post: |%#v|\n", abstraction )
+      os.Exit ( 1 )
+    }
+
+    topic, ok := tach.topics[topic_name]
+    if ! ok {
+      fp ( os.Stdout, "tachyon error: Got Abstraction with no topic: |%#v|\n", abstraction )
+      continue  // Just drop it. Topicless posts may be used in development.
+    }
+
+    topic.post ( abstraction )
+
+  }
 }
 
 

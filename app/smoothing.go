@@ -10,10 +10,12 @@ import (
 
 
 func smoothing ( tach * t.Tachyon, me * t.Abstractor ) {
+  var id uint64
+
   // To subscribe to our topic, we must supply
-  // the channel that the topic will use to communicate
-  // to us.
-  my_input_channel := make ( chan t.Message, 10 )
+  // the channel that the topic will use to 
+  // communicate to us.
+  my_input_channel := make ( chan * t.Abstraction, 10 )
 
   // Send the request.
   tach.Requests <- t.Message { "request" : "subscribe",
@@ -26,78 +28,70 @@ func smoothing ( tach * t.Tachyon, me * t.Abstractor ) {
   var saved_energy, min_energy, new_energy int64
 
   for {
-    msg := <- my_input_channel
+    abstraction := <- my_input_channel
+    msg := abstraction.Msg
     message_count ++
 
-    if message_count == 1 {
-      // The first message on my channel should be a confirmation
-      // from Tachyon that we are subscribed to the correct channel.
-      if msg["response"] != "subscribed" {
-        // Something bad happened.
-        fp ( os.Stdout, "App: %s: error: Failed to subscribe to |%s|\n", me.Name, me.Subscribed_Topics[0] )
-        break
-      }
+    fp ( os.Stdout, "App: %s: got msg!\n", me.Name )
+
+    histo, ok := msg["data"].([768]uint32)
+    if ! ok {
+      fp ( os.Stdout, "App: smoothing: did not get uint32 array.\n" )
+      os.Exit ( 1 )
+    }
     
-      fp ( os.Stdout, "App: %s: got subscription confirmation.\n", me.Name )
+    _, min_energy = count_reversals ( histo )
+    fp ( os.Stdout, "smooth: reversal energy original : %d\n", min_energy )
+    display_histo ( "original.jpg", histo )
+
+    smoothed = smooth ( histo )
+    _, new_energy = count_reversals ( smoothed )
+    fp ( os.Stdout, "smooth: reversal energy after smooth %d: %d\n", 1, new_energy )
+    display_histo ( "smoothed_1.jpg", smoothed )
+
+    if new_energy >= min_energy {
+      goto post
     } else {
-      // This is a real message.
-      fp ( os.Stdout, "App: %s: got msg!\n", me.Name )
+      for i := 2; i < 5; i ++ {
+        min_energy = new_energy
+        // Save the current smoothed histogram
+        // We save it here because sometimes (I don't know why)
+        // when we re-smooth, the reversal energy actually rises
+        // slightly. When that happens, we want to post the *previous*
+        // smoothed histogram as the smoothest.
+        saved = smoothed
+        saved_energy = min_energy
+        // And smooth it again.
+        smoothed = smooth ( smoothed )
+        _, new_energy = count_reversals ( smoothed )
+        fp ( os.Stdout, "smooth: reversal energy after smooth %d: %d\n", i, new_energy )
+        display_histo ( fmt.Sprintf("smoothed_%d.jpg", i), smoothed )
 
-      histo, ok := msg["data"].([768]uint32)
-      if ! ok {
-        fp ( os.Stdout, "App: smoothing: did not get uint32 array.\n" )
-        os.Exit ( 1 )
-      }
-      
-      _, min_energy = count_reversals ( histo )
-      fp ( os.Stdout, "smooth: reversal energy original : %d\n", min_energy )
-      display_histo ( "original.jpg", histo )
-
-      smoothed = smooth ( histo )
-      _, new_energy = count_reversals ( smoothed )
-      fp ( os.Stdout, "smooth: reversal energy after smooth %d: %d\n", 1, new_energy )
-      display_histo ( "smoothed_1.jpg", smoothed )
-
-      if new_energy >= min_energy {
-        goto post
-      } else {
-        for i := 2; i < 5; i ++ {
-          min_energy = new_energy
-          // Save the current smoothed histogram
-          // We save it here because sometimes (I don't know why)
-          // when we re-smooth, the reversal energy actually rises
-          // slightly. When that happens, we want to post the *previous*
-          // smoothed histogram as the smoothest.
-          saved = smoothed
-          saved_energy = min_energy
-          // And smooth it again.
-          smoothed = smooth ( smoothed )
-          _, new_energy = count_reversals ( smoothed )
-          fp ( os.Stdout, "smooth: reversal energy after smooth %d: %d\n", i, new_energy )
-          display_histo ( fmt.Sprintf("smoothed_%d.jpg", i), smoothed )
-
-          if new_energy >= min_energy {
-            fp ( os.Stdout, "smooth: done smoothing. Break 2.\n" )
-            goto post
-          }
+        if new_energy >= min_energy {
+          fp ( os.Stdout, "smooth: done smoothing. Break 2.\n" )
+          goto post
         }
       }
     }
 
-    // Don't exit the Abstractor when you post!
-    // The Abstractor never exits. Yet.
     post :
+
+    id ++
     // Post the smoothed histogram !
     if saved_energy < new_energy {
       fp ( os.Stdout, "smooth: posting smoothed histogram with reversal energy %d\n", saved_energy )
-      tach.Requests <- t.Message { "request" : "post",
-                                   "topic"   : me.Output_Topic,
-                                   "data"    : saved }
+      tach.Abstractions <- & t.Abstraction { Abstractor_Name : me.Name,
+                                             Abstraction_ID  : id,
+                                             Msg             : t.Message { "request" : "post",
+                                                                           "topic"   : me.Output_Topic,
+                                                                           "data"    : saved } }
     } else {
       fp ( os.Stdout, "smooth: posting smoothed histogram with reversal energy %d\n", new_energy )
-      tach.Requests <- t.Message { "request" : "post",
-                                   "topic"   : me.Output_Topic,
-                                   "data"    : smoothed }
+      tach.Abstractions <- & t.Abstraction { Abstractor_Name : me.Name,
+                                             Abstraction_ID  : id,
+                                             Msg             : t.Message { "request" : "post",
+                                                                           "topic"   : me.Output_Topic,
+                                                                           "data"    : smoothed } }
     }
   }
 }

@@ -18,13 +18,12 @@ type Topic struct {
 
   // This is the channel that all Abstractors use 
   // that produce abstractions for this Topic.
-  inputs chan Message
+  inputs chan * Abstraction
 
   // No storage yet. At first, the topic is just a 
   // multicast message server.
   // storage [] * Msg
-
-  subscribers [ ] chan Message
+  subscribers [ ] chan * Abstraction
 }
 
 
@@ -33,8 +32,8 @@ type Topic struct {
 
 func New_Topic ( name string ) ( * Topic ) {
   top := & Topic { name         : name,
-                   inputs       : make (     chan Message, 100 ),
-                   subscribers  : make ( [ ] chan Message, 0 ),
+                   inputs       : make (     chan * Abstraction, 100 ),
+                   subscribers  : make ( [ ] chan * Abstraction, 0 ),
                  }
   go top.listen ( ) 
   return top
@@ -44,28 +43,21 @@ func New_Topic ( name string ) ( * Topic ) {
 
 
 
-func ( top * Topic ) subscribe ( subscriber_channel chan Message ) {
-
+func ( top * Topic ) subscribe ( subscriber_channel chan * Abstraction ) {
   // Add the subscriber's channel to my list.
   top.subscribers = append ( top.subscribers, subscriber_channel )
-
-  // Send a confirmation message as the first message
-  // on the subscriber's channel. 
-  // NOTE : all subscribers to topics must undesratnd that 
-  //        the first message they will receive will be a
-  //        confirmation message -- not a 'real' message.
-  subscriber_channel <- Message { "response" : "subscribed",
-                                  "topic"    : top.name }
 }
+
+
 
 
 
 // By calling 'post', the given message 
 // is pushed out to all subscribers.
 
-func ( top * Topic ) post ( msg Message ) {
+func ( top * Topic ) post ( abstraction * Abstraction ) {
   for _, s := range top.subscribers {
-    s <- msg
+    s <- abstraction
   }
 }
 
@@ -75,14 +67,14 @@ func ( top * Topic ) post ( msg Message ) {
 
 func ( top * Topic ) listen ( ) {
   for {
-    msg, more := <- top.inputs 
+    abstraction, more := <- top.inputs 
 
     if ! more {
       break
     }
 
     for _, subscriber := range top.subscribers {
-      subscriber <- msg
+      subscriber <- abstraction
     }
   }
   

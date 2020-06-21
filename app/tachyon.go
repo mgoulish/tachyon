@@ -36,7 +36,7 @@ func main ( ) {
   n_topics = len(topics)
   for _, topic := range topics {
     tach.Requests <- t.Message { "request" : "new_topic",
-                                 "name"   : topic }
+                                 "name"    : topic }
   }
 
   //------------------------------------------
@@ -53,20 +53,20 @@ func main ( ) {
 
 
   // histogram ------------------------------------------------
-  histo  := & t.Abstractor { Name         : "histogram",
-                             Run          : histogram,
+  histo  := & t.Abstractor { Name              : "histogram",
+                             Run               : histogram,
                              Subscribed_Topics : []string{ "image" },
-                             Output_Topic : "histogram",
+                             Output_Topic      : "histogram",
                            } 
   tach.Requests <- t.Message { "request"    : "add_abstractor",
                                "abstractor" : histo }
 
 
   // smoothing ------------------------------------------------
-  smooth := & t.Abstractor { Name         : "smoothing",
-                             Run          : smoothing,
+  smooth := & t.Abstractor { Name              : "smoothing",
+                             Run               : smoothing,
                              Subscribed_Topics : []string{ "histogram" },
-                             Output_Topic : "smoothed_histogram",
+                             Output_Topic      : "smoothed_histogram",
                            } 
   tach.Requests <- t.Message { "request"    : "add_abstractor",
                                "abstractor" : smooth }
@@ -74,8 +74,8 @@ func main ( ) {
 
 
   // threshold ------------------------------------------------
-  thresh := & t.Abstractor { Name         : "threshold",
-                             Run          : threshold,
+  thresh := & t.Abstractor { Name              : "threshold",
+                             Run               : threshold,
                              Subscribed_Topics : []string{ "smoothed_histogram" },
                            } 
   tach.Requests <- t.Message { "request"    : "add_abstractor",

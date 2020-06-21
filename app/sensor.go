@@ -16,6 +16,9 @@ import (
 // Currently, it simulates a real sensor by just reading image files off a disk.
 func sensor ( tach * t.Tachyon, me * t.Abstractor ) {
   fp ( os.Stdout, "Abstractor %s starting.\n", me.Name )
+
+  var id uint64
+
   for i := 2; i < 101; i ++ {
     time.Sleep ( time.Second )
     // These images are frames that I split out of the video 
@@ -23,9 +26,12 @@ func sensor ( tach * t.Tachyon, me * t.Abstractor ) {
     image_file_name := fmt.Sprintf ( "/home/annex_2/vision_data/apollo/docking_with_lem/image-%04d.jpg", i )
     image := t.Read_Image ( image_file_name )
     fp ( os.Stdout, "\n\n\nApp: sensor: %s\n", image_file_name )
-    tach.Requests <- t.Message { "request" : "post",
-                                 "topic"   : me.Output_Topic,
-                                 "data"    : image }
+    id ++
+    tach.Abstractions <- & t.Abstraction { Abstractor_Name : me.Name,
+                                           Abstraction_ID  : id,
+                                           Msg             : t.Message { "request" : "post",
+                                                             "topic"   : me.Output_Topic,
+                                                             "data"    : image } }
   }
 }
 
