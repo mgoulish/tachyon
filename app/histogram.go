@@ -25,8 +25,8 @@ func histogram ( tach * t.Tachyon, me * t.Abstractor ) ( ) {
 
   message_count := 0
   for {
-    abstraction := <- my_input_channel
-    msg := abstraction.Msg
+    input_abstraction := <- my_input_channel
+    msg := input_abstraction.Msg
 
     message_count ++
 
@@ -55,6 +55,14 @@ func histogram ( tach * t.Tachyon, me * t.Abstractor ) ( ) {
                                              "topic"   : me.Output_Topic,
                                              "data"    : histo } }
     a.Timestamp()
+
+    // My genealogy is the entire genealogy of my input
+    // abstraction, plus its own ID.
+    for _, id := range input_abstraction.Genealogy {
+      a.Add_To_Genealogy ( id )
+    }
+    a.Add_To_Genealogy ( & input_abstraction.ID )
+
     tach.Abstractions <- a
   }
 

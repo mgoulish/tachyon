@@ -28,8 +28,8 @@ func smoothing ( tach * t.Tachyon, me * t.Abstractor ) {
   var saved_energy, min_energy, new_energy int64
 
   for {
-    abstraction := <- my_input_channel
-    msg := abstraction.Msg
+    input_abstraction := <- my_input_channel
+    msg := input_abstraction.Msg
     message_count ++
 
     fp ( os.Stdout, "App: %s: got msg!\n", me.Name )
@@ -76,26 +76,34 @@ func smoothing ( tach * t.Tachyon, me * t.Abstractor ) {
 
     post :
 
-    id ++
-    // Post the smoothed histogram !
-    if saved_energy < new_energy {
-      fp ( os.Stdout, "smooth: posting smoothed histogram with reversal energy %d\n", saved_energy )
-      a := & t.Abstraction { ID  : t.Abstraction_ID { Abstractor_Name : me.Name, ID : id },
-                             Msg : t.Message { "request" : "post",
-                                               "topic"   : me.Output_Topic,
-                                               "data"    : saved } }
-      a.Timestamp()
-      tach.Abstractions <- a
-    } else {
-      fp ( os.Stdout, "smooth: posting smoothed histogram with reversal energy %d\n", new_energy )
-      a := & t.Abstraction { ID  : t.Abstraction_ID { Abstractor_Name : me.Name, ID : id },
-                             Msg : t.Message { "request" : "post",
-                                               "topic"   : me.Output_Topic,
-                                               "data"    : smoothed } }
+      var a * t.Abstraction
 
-      a.Timestamp()
+      id ++
+      // Post the smoothed histogram !
+      if saved_energy < new_energy {
+        fp ( os.Stdout, "smooth: posting smoothed histogram with reversal energy %d\n", saved_energy )
+        a = & t.Abstraction { ID  : t.Abstraction_ID { Abstractor_Name : me.Name, ID : id },
+                              Msg : t.Message { "request" : "post",
+                                                "topic"   : me.Output_Topic,
+                                                "data"    : saved } }
+        a.Timestamp()
+      } else {
+        fp ( os.Stdout, "smooth: posting smoothed histogram with reversal energy %d\n", new_energy )
+        a = & t.Abstraction { ID  : t.Abstraction_ID { Abstractor_Name : me.Name, ID : id },
+                              Msg : t.Message { "request" : "post",
+                                                "topic"   : me.Output_Topic,
+                                                "data"    : smoothed } }
+        a.Timestamp()
+      }
+      
+      // My genealogy is the entire genealogy of my input
+      // abstraction, plus its own ID.
+      for _, id := range input_abstraction.Genealogy {
+        a.Add_To_Genealogy ( id )
+      }
+      a.Add_To_Genealogy ( & input_abstraction.ID )
+
       tach.Abstractions <- a
-    }
   }
 }
 

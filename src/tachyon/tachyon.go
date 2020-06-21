@@ -37,6 +37,7 @@ type  Message  map[string]interface{}
 type Abstraction_ID struct {
   Abstractor_Name string
   ID              uint64    // Only unique within the namespace of this Abstractor's posts.
+  Creation_Time   float64
 }
 
 
@@ -47,7 +48,7 @@ type Abstraction struct {
   ID              Abstraction_ID
   Topic           string
   Msg             Message
-  Creation_Time   float64
+  Genealogy       [] * Abstraction_ID
 }
 
 
@@ -212,7 +213,25 @@ func abstractions ( tach * Tachyon ) {
 // since Bill Joy came to Ann Arbor.
 func (a * Abstraction) Timestamp () {
   now := time.Now()
-  a.Creation_Time = float64 ( now.UnixNano() ) / 1000000000.0
+  a.ID.Creation_Time = float64 ( now.UnixNano() ) / 1000000000.0
+}
+
+
+
+
+
+func (a * Abstraction) Add_To_Genealogy ( id * Abstraction_ID ) {
+  a.Genealogy = append ( a.Genealogy, id )
+}
+
+
+
+
+
+func (a * Abstraction) Print_Genealogy ( ) {
+  for _, id := range a.Genealogy {
+    fp ( os.Stdout, "%s  ", id.Abstractor_Name )
+  }
 }
 
 

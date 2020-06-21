@@ -24,8 +24,8 @@ func threshold ( tach * t.Tachyon, me * t.Abstractor ) ( ) {
   // Now read messages that the topic sends me.
   message_count := 0
   for {
-    abstraction := <- my_input_channel
-    msg := abstraction.Msg
+    input_abstraction := <- my_input_channel
+    msg := input_abstraction.Msg
     message_count ++
     fp ( os.Stdout, "App: %s: got msg!\n", me.Name )
 
@@ -54,9 +54,19 @@ func threshold ( tach * t.Tachyon, me * t.Abstractor ) ( ) {
                            Msg : t.Message { "request" : "post",
                                              "topic"   : me.Output_Topic,
                                              "data"    : thresh } }
-
     a.Timestamp()
-    fp ( os.Stdout, "MDEBUG thresh: |%f|\n", a.Creation_Time )
+
+    // My genealogy is the entire genealogy of my input
+    // abstraction, plus its own ID.
+    for _, id := range input_abstraction.Genealogy {
+      a.Add_To_Genealogy ( id )
+    }
+    a.Add_To_Genealogy ( & input_abstraction.ID )
+
+    fp ( os.Stdout, "THRESHOLD GENEALOGY  " )
+    a.Print_Genealogy ( )
+    fp ( os.Stdout, "\n" )
+
     tach.Abstractions <- a
   }
   
