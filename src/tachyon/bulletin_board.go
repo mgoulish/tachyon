@@ -27,9 +27,21 @@ func bulletin_board ( tach * Tachyon ) {
     select {
 
       case request := <- tach.requests_to_bb :
-        topic_name := request["name"].(string)
-        storage [ topic_name ] = make ( topic_array, 0 )
-        fp ( os.Stdout, "BB added topic |%s|\n", topic_name )
+        
+        fp ( os.Stdout, "MDEBUG request to BB: |%#v|\n", request )
+        request_type := request["request"]
+
+        switch request_type {
+          case "new_topic" :
+            topic_name := request["name"].(string)
+            storage [ topic_name ] = make ( topic_array, 0 )
+            fp ( os.Stdout, "BB added topic |%s|\n", topic_name )
+
+          default:
+            fp ( os.Stdout, "bulletin_board error: unknown request: |%s|\n", request_type )
+            os.Exit ( 1 )
+        }
+
 
       case abstraction := <- tach.abstractions_to_bb :
         topic_name := abstraction.Msg["topic"].(string)

@@ -183,8 +183,13 @@ func requests ( tach * Tachyon ) {
 
 
 
+      case "bb_request" :
+        fp ( os.Stdout, "Bulletin Board request: |%#v|\n", msg )
+
+
+
       default :
-        fp ( os.Stdout, "tachyon: tach_requests error: unknown request |%s|\n", msg["request"] )
+        fp ( os.Stdout, "tachyon: tach_requests error: unknown request |%#v|\n", msg )
         os.Exit ( 1 )
     }
   }

@@ -91,6 +91,18 @@ func threshold ( tach * t.Tachyon, me * t.Abstractor ) ( ) {
       f, _ := os.Create ( log_file )
       fp ( f, "threshold %d\n", thresh ) 
       f.Close()
+      
+      // Find the original image in my genealogy.
+      var antecedent * t.Abstraction_ID
+      for _, antecedent = range a.Genealogy {
+        if antecedent.Abstractor_Name == "sensor" {
+          break
+        }
+      }
+      fp ( os.Stdout, "MDEBUG image is: |%#v|\n", antecedent )
+      tach.Requests <- t.Message { "request"    : "bb_request",
+                                   "abstractor" : antecedent.Abstractor_Name,
+                                   "ID"         : antecedent.ID }
     }
   }
   
