@@ -37,6 +37,24 @@ func bulletin_board ( tach * Tachyon ) {
             storage [ topic_name ] = make ( topic_array, 0 )
             fp ( os.Stdout, "BB added topic |%s|\n", topic_name )
 
+          case "bb_request" :
+            fp ( os.Stdout, "MDEBUG BB got a request!  |%#v|\n", request )
+            topic_name := request["topic"].(string)
+            topic := storage[topic_name]
+            target_ID := request["ID"]
+            found := false
+            for _, abs := range topic {
+              if abs.ID.ID == target_ID {
+                found = true
+                reply_to := request["reply_to"].(chan * Abstraction)
+                reply_to <- abs 
+              }
+            }
+            if ! found {
+              fp ( os.Stdout, "bulletin_board error: abs not found\n" )
+              os.Exit ( 1 )
+            }
+
           default:
             fp ( os.Stdout, "bulletin_board error: unknown request: |%s|\n", request_type )
             os.Exit ( 1 )

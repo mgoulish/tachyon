@@ -26,7 +26,6 @@ func threshold ( tach * t.Tachyon, me * t.Abstractor ) ( ) {
   message_count := 0
   for {
 
-
     input_abstraction := <- my_input_channel
     msg := input_abstraction.Msg
     message_count ++
@@ -101,8 +100,13 @@ func threshold ( tach * t.Tachyon, me * t.Abstractor ) ( ) {
       }
       fp ( os.Stdout, "MDEBUG image is: |%#v|\n", antecedent )
       tach.Requests <- t.Message { "request"    : "bb_request",
+                                   "topic"      : "image",
                                    "abstractor" : antecedent.Abstractor_Name,
-                                   "ID"         : antecedent.ID }
+                                   "ID"         : antecedent.ID,
+                                   "reply_to"   : my_input_channel }
+      
+      response := <- my_input_channel
+      fp ( os.Stdout, "MDEBUG threshold got a response! |%#v|\n", response )
     }
   }
   

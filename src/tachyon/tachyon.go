@@ -185,6 +185,8 @@ func requests ( tach * Tachyon ) {
 
       case "bb_request" :
         fp ( os.Stdout, "Bulletin Board request: |%#v|\n", msg )
+        // Forward to the Bulletin Board.
+        tach.requests_to_bb <- msg
 
 
 
