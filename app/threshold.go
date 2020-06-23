@@ -2,6 +2,7 @@ package main
 
 import (
          "os"
+         "fmt"
 
          t "tachyon"
        )
@@ -24,10 +25,26 @@ func threshold ( tach * t.Tachyon, me * t.Abstractor ) ( ) {
   // Now read messages that the topic sends me.
   message_count := 0
   for {
+
+
     input_abstraction := <- my_input_channel
     msg := input_abstraction.Msg
     message_count ++
     fp ( os.Stdout, "App: %s: got msg!\n", me.Name )
+
+
+    logging := false
+    var my_logging_root string
+    if me.Log != "" {
+      my_logging_root = me.Log + "/threshold"
+      if ! t.Path_Exists ( my_logging_root ) {
+        os.Mkdir ( my_logging_root, 0700 )
+      }
+      my_logging_root += fmt.Sprintf ( "/%d", message_count )
+      os.Mkdir ( my_logging_root, 0700 )
+      logging = true
+    }
+
 
     histo, ok := msg["data"].([768]uint32)
     if ! ok {
@@ -68,6 +85,13 @@ func threshold ( tach * t.Tachyon, me * t.Abstractor ) ( ) {
     fp ( os.Stdout, "\n" )
 
     tach.Abstractions <- a
+    
+    if logging {
+      log_file := my_logging_root + "/threshold"
+      f, _ := os.Create ( log_file )
+      fp ( f, "threshold %d\n", thresh ) 
+      f.Close()
+    }
   }
   
   fp ( os.Stdout, "App: %s exiting.\n", me.Name )

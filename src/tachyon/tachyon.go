@@ -24,9 +24,9 @@ type Abstractor struct {
   Name                 string
   Output_Topic         string
   Subscribed_Topics [] string
+  Log                  string
 
   Run       func ( * Tachyon, * Abstractor )
-  Visualize func ( * Tachyon, * Abstractor )
 }
 
 
@@ -85,6 +85,24 @@ func New_Tachyon ( ) ( * Tachyon ) {
   go abstractions ( tach )
 
   return tach
+}
+
+
+
+
+func Path_Exists ( path string ) ( bool ) {
+  _, err := os.Stat ( path )
+  if err == nil { 
+    return true
+  }
+
+  if os.IsNotExist(err) { 
+    return false 
+  }
+
+  fp ( os.Stdout, "Path_Exists error |%s|\n", err.Error() )
+  os.Exit ( 1 )
+  return false
 }
 
 

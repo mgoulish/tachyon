@@ -26,6 +26,7 @@ func main ( ) {
   tach := t.New_Tachyon ( )
   go responses ( tach )
 
+
   //------------------------------------------
   // Make the topics.
   //------------------------------------------
@@ -79,6 +80,7 @@ func main ( ) {
                              Run               : threshold,
                              Subscribed_Topics : []string{ "smoothed_histogram" },
                              Output_Topic      : "threshold",
+                             Log               : "./log",
                            } 
   tach.Requests <- t.Message { "request"    : "add_abstractor",
                                "abstractor" : thresh }

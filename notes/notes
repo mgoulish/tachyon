@@ -1,3 +1,27 @@
+Mon 22 Jun 2020 09:59:22 AM EDT
+{
+  After thresholding -- Connected Components.
+  And that is the last (for now) Abstractor in the Sensorium -- 
+  the set of Abstractors that pulse in time with the Sensor.
+
+  After that -- the Object Tracker,
+  and that is the first of the higher level Abstractors.
+  It does not pulse with the Sensor in terms of posting, but
+  it does get Connected Components messages as they are posted.
+  From those it builds up multiframe objects of different
+  levels of confidence, and posts them .... when?
+
+  SOme kind of threshold in confidence level?
+  How?
+
+  When it's uncontested?
+  And how is a contest decided?
+}
+
+
+
+
+
 Fri 19 Jun 2020 02:34:11 AM EDT
 {
   So how will it work?
