@@ -106,7 +106,29 @@ func threshold ( tach * t.Tachyon, me * t.Abstractor ) ( ) {
                                    "reply_to"   : my_input_channel }
       
       response := <- my_input_channel
-      fp ( os.Stdout, "MDEBUG threshold got a response! |%#v|\n", response )
+      fp ( os.Stdout, "App: threshold got a response! |%#v|\n", response )
+
+      img := response.Msg["data"].(* t.Image)
+      thresholded_img := t.New_Image ( t.Image_Type_RGBA, img.Width, img.Height )
+
+      fp ( os.Stdout, "App: threshold got img %d x %d\n", img.Width, img.Height )
+      // Now apply the threshold.
+      for x := uint32(0); x < img.Width; x ++ {
+        for y := uint32(0); y < img.Height; y ++ {
+          r, g, b, _ := img.Get ( x, y )
+          luminance := uint64(r + g + b)
+          var result byte
+          if luminance >= thresh {
+            result = 255
+          } else {
+            result = 0
+          }
+          thresholded_img.Set ( x, y, result, result, result, 255 )
+        }
+      }
+      
+      image_file_name := fmt.Sprintf ( "%s/%04d.jpg", my_logging_root, message_count )
+      thresholded_img.Write ( image_file_name )
     }
   }
   

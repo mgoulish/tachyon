@@ -10,7 +10,7 @@ import (
         // two lines to also understand GIF and PNG images:
         // _ "image/gif"
         // _ "image/png"
-        _ "image/jpeg"
+        "image/jpeg"
 )
 
 
@@ -18,13 +18,13 @@ import (
 
 
 const (
-        image_type_none    = uint32(iota)
-        image_type_gray_8
-        image_type_gray_16
-        image_type_gray_32
-        image_type_gray_64
-        image_type_rgba
-        image_type_float
+        Image_Type_None    = uint32(iota)
+        Image_Type_Gray_8
+        Image_Type_Gray_16
+        Image_Type_Gray_32
+        Image_Type_Gray_64
+        Image_Type_RGBA
+        Image_Type_Float
 )
 
 
@@ -42,25 +42,25 @@ type Image struct {
 
 func Bytes_Per_Pixel ( image_type uint32 ) ( uint32 ) {
   switch image_type {
-    case image_type_none :
+    case Image_Type_None :
       return 0
 
-    case image_type_gray_8 :
+    case Image_Type_Gray_8 :
       return 1
 
-    case image_type_gray_16 :
+    case Image_Type_Gray_16 :
       return 2
 
-    case image_type_gray_32 :
+    case Image_Type_Gray_32 :
       return 4
 
-    case image_type_gray_64 :
+    case Image_Type_Gray_64 :
       return 8
 
-    case image_type_rgba :
+    case Image_Type_RGBA :
       return 4
 
-    case image_type_float :
+    case Image_Type_Float :
       return 8
   }
 
@@ -138,7 +138,7 @@ func Read_Image ( file_name string ) ( img * Image ) {
   width  := uint32(bounds.Max.X)
   height := uint32(bounds.Max.Y)
 
-  img = New_Image ( image_type_rgba, width, height )
+  img = New_Image ( Image_Type_RGBA, width, height )
 
   var x, y uint32
   var r, g, b, a byte
@@ -156,4 +156,37 @@ func Read_Image ( file_name string ) ( img * Image ) {
 
   return img
 }
+
+
+
+
+
+func (img * Image) Write ( file_name string ) {
+
+  output_file, err := os.Create ( file_name )
+  if err != nil {
+    fp ( os.Stdout, "image_write error: |%s|\n", err.Error() )
+    os.Exit ( 1 )
+  }
+  defer output_file.Close()
+
+  output_image := image.NewRGBA ( image.Rect(0, 0, int(img.Width), int(img.Height)) )
+
+  for y := uint32(0); y < uint32(img.Height); y ++ {
+    for x := uint32(0); x < uint32(img.Width); x ++ {
+      r, g, b, a := img.Get ( x, y )
+      addr := 4 * ( (y * img.Width) + x )
+      output_image.Pix [ addr     ] = r
+      output_image.Pix [ addr + 1 ] = g
+      output_image.Pix [ addr + 2 ] = b
+      output_image.Pix [ addr + 3 ] = a
+    }
+  }
+
+  jpeg.Encode ( output_file, output_image, nil )
+}
+
+
+
+
 
