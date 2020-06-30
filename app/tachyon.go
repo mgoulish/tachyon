@@ -41,52 +41,6 @@ func main ( ) {
                                  "name"    : topic }
   }
 
-  //------------------------------------------
-  // Make the Abstractors.
-  //------------------------------------------
-
-  // sensor ------------------------------------------------
-  sensor := & t.Abstractor { Name         : "sensor",
-                             Run          : sensor,
-                             Output_Topic : "image",
-                           } 
-  tach.Requests <- t.Message { "request"    : "add_abstractor",
-                               "abstractor" : sensor }
-
-
-  // histogram ------------------------------------------------
-  histo  := & t.Abstractor { Name              : "histogram",
-                             Run               : histogram,
-                             Subscribed_Topics : []string{ "image" },
-                             Output_Topic      : "histogram",
-                           } 
-  tach.Requests <- t.Message { "request"    : "add_abstractor",
-                               "abstractor" : histo }
-
-
-  // smoothing ------------------------------------------------
-  smooth := & t.Abstractor { Name              : "smoothing",
-                             Run               : smoothing,
-                             Subscribed_Topics : []string{ "histogram" },
-                             Output_Topic      : "smoothed_histogram",
-                           } 
-  tach.Requests <- t.Message { "request"    : "add_abstractor",
-                               "abstractor" : smooth }
-
-
-
-  // threshold ------------------------------------------------
-  thresh := & t.Abstractor { Name              : "threshold",
-                             Run               : threshold,
-                             Subscribed_Topics : []string{ "smoothed_histogram" },
-                             Output_Topic      : "threshold",
-                             Log               : "./log",
-                           } 
-  tach.Requests <- t.Message { "request"    : "add_abstractor",
-                               "abstractor" : thresh }
-
-
-
   // Quit when the user hits 'enter'.
   var s string
   fmt.Scanf ( "%s", & s )
@@ -109,11 +63,85 @@ func responses ( tach * t.Tachyon ) {
     }
 
     if created_topics >= n_topics && abstractors_started == false {
+      
+      make_abstractors ( tach )
+
       abstractors_started = true
       fp ( os.Stdout, "App: starting abstractors.\n" )
       tach.Requests <- t.Message { "request": "start abstractors" }
     }
   }
+}
+
+
+
+
+func make_abstractors ( tach * t.Tachyon ) {
+
+  /*---------------------------------------------------------------
+    For an Abstractor input channel: 
+      1. Create the channel.
+      2. Ask Tachyon to subscribe it to the proper Topic.
+      3. Give it to the Abstractor.
+
+    For the output channel:
+      1. Ask Tachyon for the Topic you want the Abstractor 
+         to post to. (It will give you an Abstraction Channel.)
+      2. Give that to the Abstractor as its output channel.
+    
+    The Abstractor also has to be added to Tachyon's list
+    so that it will be able to start them all when everything
+    is finished being wired up.
+  ---------------------------------------------------------------*/
+
+
+
+  // sensor ------------------------------------------------
+  sensor := & t.Abstractor { Name   : "sensor",
+                             Run    : sensor,
+                             Output : tach.Get_Topic("image"),
+                           } 
+  tach.Requests <- t.Message { "request"    : "add_abstractor",
+                               "abstractor" : sensor }
+
+
+  // histogram ------------------------------------------------
+  input_channel := make ( t.Abstraction_Channel, 100 )
+  tach.Subscribe ( input_channel, "image" )
+  histo  := & t.Abstractor { Name   : "histogram",
+                             Run    : histogram,
+                             Input  : input_channel,
+                             Output : tach.Get_Topic("histogram"),
+                           } 
+  tach.Requests <- t.Message { "request"    : "add_abstractor",
+                               "abstractor" : histo }
+
+
+  // smoothing ------------------------------------------------
+  input_channel = make ( t.Abstraction_Channel, 100 )
+  tach.Subscribe ( input_channel, "histogram" )
+  smooth := & t.Abstractor { Name   : "smoothing",
+                             Run    : smoothing,
+                             Input  : input_channel,
+                             Output : tach.Get_Topic("smoothed_histogram"),
+                           } 
+  tach.Requests <- t.Message { "request"    : "add_abstractor",
+                               "abstractor" : smooth }
+
+
+
+  // threshold ------------------------------------------------
+  input_channel = make ( t.Abstraction_Channel, 100 )
+  tach.Subscribe ( input_channel, "smoothed_histogram" )
+  thresh := & t.Abstractor { Name   : "threshold",
+                             Run    : threshold,
+                             Input  : input_channel,
+                             Output : tach.Get_Topic("threshold"),
+                             Log    : "./log",
+                           } 
+  tach.Requests <- t.Message { "request"    : "add_abstractor",
+                               "abstractor" : thresh }
+
 }
 
 

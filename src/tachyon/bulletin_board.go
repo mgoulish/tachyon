@@ -46,12 +46,12 @@ func bulletin_board ( tach * Tachyon ) {
             for _, abs := range topic {
               if abs.ID.ID == target_ID {
                 found = true
-                reply_to := request["reply_to"].(chan * Abstraction)
+                reply_to := request["reply_to"].(Abstraction_Channel)
                 reply_to <- abs 
               }
             }
             if ! found {
-              fp ( os.Stdout, "bulletin_board error: abs not found\n" )
+              fp ( os.Stdout, "bulletin_board error: abstraction not found\n" )
               os.Exit ( 1 )
             }
 

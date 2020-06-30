@@ -29,10 +29,10 @@ func sensor ( tach * t.Tachyon, me * t.Abstractor ) {
     id ++
     a := & t.Abstraction { ID  : t.Abstraction_ID { Abstractor_Name : me.Name, ID : id },
                            Msg : t.Message { "request" : "post",
-                                             "topic"   : me.Output_Topic,
+                                             "topic"   : "image",
                                              "data"    : image } }
     a.Timestamp()
-    tach.Abstractions <- a
+    me.Output <- a
   }
 }
 

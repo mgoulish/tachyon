@@ -12,23 +12,13 @@ import (
 func smoothing ( tach * t.Tachyon, me * t.Abstractor ) {
   var id uint64
 
-  // To subscribe to our topic, we must supply
-  // the channel that the topic will use to 
-  // communicate to us.
-  my_input_channel := make ( chan * t.Abstraction, 10 )
-
-  // Send the request.
-  tach.Requests <- t.Message { "request" : "subscribe",
-                               "topic"   : me.Subscribed_Topics[0],
-                               "channel" : my_input_channel }
-
   // Now read messages that the topic sends me.
   message_count := 0
   var saved, smoothed    [768]uint32
   var saved_energy, min_energy, new_energy int64
 
   for {
-    input_abstraction := <- my_input_channel
+    input_abstraction := <- me.Input
     msg := input_abstraction.Msg
     message_count ++
 
@@ -84,14 +74,14 @@ func smoothing ( tach * t.Tachyon, me * t.Abstractor ) {
         fp ( os.Stdout, "smooth: posting smoothed histogram with reversal energy %d\n", saved_energy )
         a = & t.Abstraction { ID  : t.Abstraction_ID { Abstractor_Name : me.Name, ID : id },
                               Msg : t.Message { "request" : "post",
-                                                "topic"   : me.Output_Topic,
+                                                "topic"   : "smoothed_histogram",
                                                 "data"    : saved } }
         a.Timestamp()
       } else {
         fp ( os.Stdout, "smooth: posting smoothed histogram with reversal energy %d\n", new_energy )
         a = & t.Abstraction { ID  : t.Abstraction_ID { Abstractor_Name : me.Name, ID : id },
                               Msg : t.Message { "request" : "post",
-                                                "topic"   : me.Output_Topic,
+                                                "topic"   : "smoothed_histogram",
                                                 "data"    : smoothed } }
         a.Timestamp()
       }
@@ -103,7 +93,7 @@ func smoothing ( tach * t.Tachyon, me * t.Abstractor ) {
       }
       a.Add_To_Genealogy ( & input_abstraction.ID )
 
-      tach.Abstractions <- a
+      me.Output <- a
   }
 }
 

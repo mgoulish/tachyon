@@ -1,3 +1,59 @@
+Thu 25 Jun 2020 02:41:49 AM EDT
+{
+  SO, here is the first instance of top-down activity.
+
+  The thresholder has set a threshold that is too high,
+  because it is only using its histogram input, and using 
+  a heuristic based on that.
+
+  What it *should* be doing is partnering in some way
+  with a higher-level Abstractor that judges shape quality.
+  See : ./threshold/*.jpg for examples of too-low threshold,
+  too-high, and Just Right -- from the point of view of this
+  hypothetical shape evaluator.
+
+  But -- how does that shape-evaluator become associated 
+  with a thresholder? And note: there is more than one way 
+  to evaluate shapes. So there could be several -- or many --
+  of these pairings of thresholder + evaluator.
+  And such partnerships could extent to more than two
+  Abstractors!
+
+  So how does that all work?
+  Well, it has to be something like this:
+
+    1. The shape evaluator starts at system-startup time.
+       It gets the Abstractions channel from Tachyon,
+       so it will know how to post results.
+
+    2. It *requests* ... or ... just *creates* its own 
+       thresholder. The shape-evaluator subscribes to 
+       the image topic, but then hands the channel to 
+       the thresholder. And also hands the thresholder 
+       a channel on which to post its results.
+
+    3. So -- let's change the interface to all Abstractors 
+       so that the launching fn hands them their input and 
+       output channels. In that way, main() can create 
+       'mainstream' Abstractors .... while some Abstractors
+       can create their own little networks.
+       I.e. this particular shape-evaluator make a little 
+       network of itself plus a thresholder.  The thresholder 
+       gets images from the usual mainstream topic ... but then
+       posts its results back only to the evaluator -- which only
+       posts a result (a thresholded image) when/if it is happy.
+
+    4. Ah -- but this thresholder is not the one I already have -- 
+       because it is written specifically to interact tightly
+       with feedback from the shape-evaluator.
+
+
+}
+
+
+
+
+
 Mon 22 Jun 2020 09:59:22 AM EDT
 {
   After thresholding -- Connected Components.

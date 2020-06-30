@@ -11,22 +11,13 @@ import (
 
 func threshold ( tach * t.Tachyon, me * t.Abstractor ) ( ) {
   var id uint64
+  fp ( os.Stdout, "MDEBUG thresh starting.\n" )
 
-  // To subscribe to our topic, we must supply
-  // the channel that the topic will use to 
-  // communicate to us.
-  my_input_channel := make ( chan * t.Abstraction, 10 ) 
-
-  // Send the request.
-  tach.Requests <- t.Message { "request" : "subscribe",
-                               "topic"   : me.Subscribed_Topics[0],
-                               "channel" : my_input_channel }
-
-  // Now read messages that the topic sends me.
   message_count := 0
   for {
 
-    input_abstraction := <- my_input_channel
+
+    input_abstraction := <- me.Input
     msg := input_abstraction.Msg
     message_count ++
     fp ( os.Stdout, "App: %s: got msg!\n", me.Name )
@@ -34,6 +25,7 @@ func threshold ( tach * t.Tachyon, me * t.Abstractor ) ( ) {
 
     logging := false
     var my_logging_root string
+    fp ( os.Stdout, "MDEBUG thresh: log: |%s|\n", me.Log )
     if me.Log != "" {
       my_logging_root = me.Log + "/threshold"
       if ! t.Path_Exists ( my_logging_root ) {
@@ -68,7 +60,7 @@ func threshold ( tach * t.Tachyon, me * t.Abstractor ) ( ) {
     id ++
     a := & t.Abstraction { ID  : t.Abstraction_ID { Abstractor_Name : me.Name, ID : id },
                            Msg : t.Message { "request" : "post",
-                                             "topic"   : me.Output_Topic,
+                                             "topic"   : "threshold",
                                              "data"    : thresh } }
     a.Timestamp()
 
@@ -79,13 +71,14 @@ func threshold ( tach * t.Tachyon, me * t.Abstractor ) ( ) {
     }
     a.Add_To_Genealogy ( & input_abstraction.ID )
 
-    fp ( os.Stdout, "THRESHOLD GENEALOGY  " )
-    a.Print_Genealogy ( )
-    fp ( os.Stdout, "\n" )
+    me.Output <- a
 
-    tach.Abstractions <- a
+    // TODO -- this is disgusting. Give the logging stuff its own fn.
     
     if logging {
+      fp ( os.Stdout, "MDEBUG threshold is logging.\n" )
+      
+      // Write a text message to my log directory.
       log_file := my_logging_root + "/threshold"
       f, _ := os.Create ( log_file )
       fp ( f, "threshold %d\n", thresh ) 
@@ -98,14 +91,13 @@ func threshold ( tach * t.Tachyon, me * t.Abstractor ) ( ) {
           break
         }
       }
-      fp ( os.Stdout, "MDEBUG image is: |%#v|\n", antecedent )
       tach.Requests <- t.Message { "request"    : "bb_request",
                                    "topic"      : "image",
                                    "abstractor" : antecedent.Abstractor_Name,
                                    "ID"         : antecedent.ID,
-                                   "reply_to"   : my_input_channel }
+                                   "reply_to"   : me.Input }
       
-      response := <- my_input_channel
+      response := <- me.Input
       fp ( os.Stdout, "App: threshold got a response! |%#v|\n", response )
 
       img := response.Msg["data"].(* t.Image)
@@ -127,6 +119,7 @@ func threshold ( tach * t.Tachyon, me * t.Abstractor ) ( ) {
         }
       }
       
+      // And write the image file to my log directory.
       image_file_name := fmt.Sprintf ( "%s/%04d.jpg", my_logging_root, message_count )
       thresholded_img.Write ( image_file_name )
     }

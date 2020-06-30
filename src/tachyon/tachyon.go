@@ -17,16 +17,17 @@ var fp = fmt.Fprintf
 //=================================================================
 
 
+type Abstraction_Channel chan * Abstraction
+
 
 // These are the processors that cooperate to
 // build up an understanding of the input image.
 type Abstractor struct {
-  Name                 string
-  Output_Topic         string
-  Subscribed_Topics [] string
-  Log                  string
-
-  Run       func ( * Tachyon, * Abstractor )
+  Name   string
+  Input  Abstraction_Channel
+  Output Abstraction_Channel
+  Log    string
+  Run    func ( * Tachyon, * Abstractor )
 }
 
 
@@ -56,12 +57,11 @@ type Abstraction struct {
 type Tachyon struct {
   Requests     chan   Message     // from App to Tachyon
   Responses    chan   Message     // from Tachyon to App
-  Abstractions chan * Abstraction // from Abstractors to Tachyon, and then out to the Topics.
 
   abstractors  [] *Abstractor
   topics       map[string] * Topic
 
-  abstractions_to_bb chan * Abstraction
+  abstractions_to_bb Abstraction_Channel
   requests_to_bb     chan   Message
 }
 
@@ -72,7 +72,6 @@ type Tachyon struct {
 func New_Tachyon ( ) ( * Tachyon ) {
   tach := & Tachyon { Requests     : make ( chan Message, 100 ),
                       Responses    : make ( chan Message, 100 ),
-                      Abstractions : make ( chan * Abstraction, 100 ),
 
                       topics       : make ( map[string] * Topic ),
 
@@ -82,9 +81,23 @@ func New_Tachyon ( ) ( * Tachyon ) {
 
   go bulletin_board ( tach )
   go requests     ( tach )
-  go abstractions ( tach )
 
   return tach
+}
+
+
+
+
+
+func (tach * Tachyon) Get_Topic ( topic_name string ) (Abstraction_Channel) {
+  topic, ok :=  tach.topics [ topic_name ]
+
+  if ! ok {
+    fp ( os.Stdout, "Tachyon error: topic not found: |%s|\n", topic_name )
+    os.Exit ( 1 )
+  }
+
+  return topic.input_channel
 }
 
 
@@ -109,6 +122,19 @@ func Path_Exists ( path string ) ( bool ) {
 
 
 
+func (tach * Tachyon) Subscribe ( channel Abstraction_Channel, topic_name string ) {
+  topic, ok := tach.topics [ topic_name ]
+  if ! ok {
+    fp ( os.Stdout, "Tachyon error: no such topic: |%s|\n", topic_name )
+    os.Exit(1)
+  }
+  topic.subscribe ( channel )
+}
+
+
+
+
+
 //=================================================================
 //  Private
 //=================================================================
@@ -123,7 +149,7 @@ func requests ( tach * Tachyon ) {
 
     switch msg["request"] {
       
-      // Topics can't have any of the following keywords as their namnes.
+      // Topics can't have any of the following keywords as their names.
 
       case "add_abstractor" :
         abstractor, ok := msg["abstractor"].(*Abstractor)
@@ -143,34 +169,13 @@ func requests ( tach * Tachyon ) {
           fp ( os.Stdout, "tachyon tach_requests error: new_topic: no string value for |name|\n" )
           continue
         }
-        top  := New_Topic ( name )
+        top  := New_Topic ( tach, name )
         tach.topics [ name ] = top
         // Let the Bulletin Board know about it.
         tach.requests_to_bb <- msg
         // Tell the App that the topic has been created.
         tach.Responses <- Message { "response" : "new_topic",
                                     "name"     : name }
-
-
-
-      case "subscribe" :
-        topic_name, ok := msg["topic"].(string)
-        if ! ok {
-          fp ( os.Stdout, "tach_requests error: subscribe with no topic |%#v|\n", msg )
-          continue
-        }
-        channel, ok := msg["channel"].(chan * Abstraction)
-        if ! ok {
-          fp ( os.Stdout, "tach_requests error: subscribe with no channel |%#v|\n", msg )
-          fp ( os.Stdout, "MDEBUG type is %T\n", channel )
-          os.Exit ( 1 )
-        }
-        topic, ok := tach.topics [ topic_name ]
-        if ! ok {
-          fp ( os.Stdout, "tach_requests error: no such topic: |%s|\n", topic_name )
-        }
-        topic.subscribe ( channel )
-        // The topic will send a confirmation message.
 
 
 
@@ -198,38 +203,6 @@ func requests ( tach * Tachyon ) {
 
   fp ( os.Stdout, "tach_requests exiting.\n" )
 }
-
-
-
-
-// All abstractions posted by the Abstractots come here, 
-// before being sent out to their individual topics.
-func abstractions ( tach * Tachyon ) {
-  for {
-    abstraction, more := <- tach.Abstractions
-    if ! more {
-      break
-    }
-    
-    topic_name, ok := abstraction.Msg["topic"].(string)
-    if ! ok {
-      fp ( os.Stdout, "Tachyon error: abstractions: no topic name in this post: |%#v|\n", abstraction )
-      os.Exit ( 1 )
-    }
-
-    topic, ok := tach.topics[topic_name]
-    if ! ok {
-      fp ( os.Stdout, "tachyon error: Got Abstraction with no topic: |%#v|\n", abstraction )
-      continue  // Just drop it. Topicless posts may be used in development.
-    }
-
-    topic.post ( abstraction )
-
-    // And let the Bulletin Board know about it.
-    tach.abstractions_to_bb <- abstraction
-  }
-}
-
 
 
 
