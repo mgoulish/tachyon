@@ -9,7 +9,10 @@ import (
 var fp = fmt.Fprintf
 
 
-type Message map [ string ] interface{}
+type Message struct {
+  Type string  
+  Data map [ string ] interface{}
+}
 
 
 type Message_Channel chan Message

@@ -17,9 +17,10 @@ var fp = fmt.Fprintf
 
 func main ( ) {
 
-  // Here's a little message.
-  msg := t.Message { "Hello" : 12, "AI" : 12 }
-  fp ( os.Stdout, "Hello, AI. Here's a message: %v\n", msg )
+  // Here's a small message.
+  msg := t.Message { Type : "my_type", 
+                     Data : map[string]interface{} { "Hello" : 12, "AI" : 12 } }
+  fp ( os.Stdout, "Here's a message: %v\n", msg )
 
   // Now let's make a Bulletin Board and register a channel with it.
   bb := t.New_Bulletin_Board ( )
