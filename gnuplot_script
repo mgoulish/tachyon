@@ -1,9 +1,0 @@
-set autoscale
-unset key
-set ylabel "frequency"
-set xlabel "grayscale"
-set terminal jpeg size 2000,500
-set output "plot.jpg"
-set title "luminance histogram"
-plot "data" with linespoints
-
