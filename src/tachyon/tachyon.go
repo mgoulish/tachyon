@@ -9,35 +9,49 @@ import (
 var fp = fmt.Fprintf
 
 
+
+
+
 type Message struct {
   Type string  
   Data map [ string ] interface{}
 }
 
 
+
+
+
 type Message_Channel chan Message
 
 
 
+
+
 type Bulletin_Board struct {
-  message_channels map [string] []Message_Channel
+  output_channels map [string] []Message_Channel
 }
 
 
 
-func New_Bulletin_Board ( ) ( * Bulletin_Board ) {
-  return & Bulletin_Board { message_channels : make ( map[string] []Message_Channel, 0 ) }
+
+
+func Start_Bulletin_Board ( ) ( Message_Channel ) {
+
+  requests := make ( Message_Channel, 5 )
+  go run_bulletin_board ( requests )
+  return requests
 }
 
 
 
-func ( bb * Bulletin_Board ) Register_Channel ( message_type string, 
-                                                channel Message_Channel ) {
-  bb.message_channels[message_type] = append ( bb.message_channels[message_type], channel )
 
-  fp ( os.Stdout, "BB now has : \n" )
-  for message_type, channels := range bb.message_channels {
-    fp ( os.Stdout, "    message type: %s     channels: %d\n",  message_type, len(channels) )
+
+func run_bulletin_board ( requests Message_Channel ) {
+  bb := Bulletin_Board { output_channels : make ( map[string] []Message_Channel, 0 ) }
+
+  for {
+    msg := <- requests
+    fp ( os.Stdout, "MDEBUG BB |%#v| gets message: |%v|\n", bb, msg )
   }
 }
 
