@@ -22,6 +22,8 @@ var fp = fmt.Fprintf
 func abstractor ( name string, bb_channel t.Message_Channel ) {
   input_channel := make ( t.Message_Channel, 5 )
 
+  fp ( os.Stdout, "Abstractor %s input channel is |%#v|\n", name, input_channel )
+
   input_request := t.Message { Type : "input_request",
                                Data : map[string]interface{} { "type"    : "image",
                                                                "channel" : input_channel} }
