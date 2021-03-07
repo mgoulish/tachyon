@@ -1,0 +1,10 @@
+#! /bin/bash
+export TACHYON_ROOT=${HOME}/tachyon
+export GOPATH=${TACHYON_ROOT}:/home/mick/go
+
+
+go run ./whd2tif.go ../tif2whd/image.whd ./image.tif
+
+
+
+
