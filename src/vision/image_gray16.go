@@ -310,3 +310,12 @@ func ( img * Image ) Histogram_gray16 ( x, y, w, h uint32 ) ( []int ) {
 
 
 
+func ( img * Image ) Constant_Gray16 ( c uint16 ) ( ) {
+  var x, y uint32
+  for y = 0; y < img.Height; y ++ {
+    for x = 0; x < img.Width; x ++ {
+        img.Set_gray16 ( x, y, c )
+    }
+  }
+}
+

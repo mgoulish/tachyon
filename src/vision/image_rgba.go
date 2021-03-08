@@ -116,3 +116,27 @@ func (img * Image) Write_rgba_to_tif ( file_name string ) {
 
 
 
+func ( img * Image ) Constant_rgba ( r, g, b, a byte ) ( ) {
+  var x, y uint32
+  for y = 0; y < img.Height; y ++ {
+    for x = 0; x < img.Width; x ++ {
+        img.Set_rgba ( x, y, r, g, b, a )
+    }
+  }
+}
+
+
+
+
+
+func ( img * Image ) Vertical_line_rgba ( x uint32, r, g, b, a byte ) ( ) {
+  var y uint32
+  for y = 0; y < img.Height; y ++ {
+    img.Set_rgba ( x, y, r, g, b, a )
+  }
+}
+
+
+
+
+
