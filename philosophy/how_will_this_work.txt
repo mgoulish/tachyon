@@ -1,0 +1,39 @@
+
+A sensor creates an image from the outside world.
+
+There are several Abstractors that go to work on the image,
+creating 1-D signals from it.
+
+A bunch of 1-D processors go to work on those, 
+extracting 'features' from the signals.
+These are just higher-level Abstractions.
+
+The signal-processors only post if they are happy 
+enough with the result.
+
+Some other Abstractors look at those signal-features. They do 
+interesting things to the associated images based on what they 
+see in those features.  They create new images, and post them.
+
+
+How do those image processors know which image was the basis 
+for the signal-feature they are looking at?
+They know because:
+
+    1. All posts have a unique identifier.
+    2. A post can be retrieved by its identifier.
+    3. Every post has a map associating its antecedent posts 
+       with various aspects of it, which are represented by strings.
+
+In this case, an interested Abstractor looks at this signal's
+antecedent map, looks up which post was its image, and retrieves
+that.
+
+How does an Abstractor become aware of an input that it may want?
+The Abstractions are typed, are stored in one great map with 
+ID as key. 
+Also stored (ID) chronologically.
+When an Abstractor wants a new one, it asks the BB, and provides a
+type and a timestamp.  Gets back a list of all posts of that type
+after that time.
+
